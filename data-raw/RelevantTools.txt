@@ -1,0 +1,16 @@
+R Qualtrics Integrations
+- Check out: https://jdunham.io/qsurvey/
+ - Import / Export: https://dstanley4.github.io/psyc4780bookdown/qualtrics.html
+ - Design in R for export to Qualtrics: https://www.youtube.com/watch?v=UTbnwb10oqk
+ - Survey creation in R: https://github.com/saberry/qualtricsR
+ - Export to Qualtrics: https://www3.nd.edu/~sberry5/qualtricsAPI.html#:~:text=RStudio%20allows%20you%20to%20open,of%20specifying%20parts%20of%20questions.
+ - Analysing Qualtrics responses in R: https://docs.ropensci.org/qualtRics/
+
+R REDCap Integrations
+ - https://discourse.datamethods.org/t/redcap-r-best-practices/6184
+ - https://cran.r-project.org/web/packages/redcapAPI/
+ - https://cran.r-project.org/web/packages/REDCapR/
+ - https://cran.r-project.org/web/packages/REDCapExporter/
+ - https://cran.r-project.org/web/packages/rccola/index.html
+ - https://github.com/couthcommander/rcmoonpie/blob/main/vignette.pdf
+

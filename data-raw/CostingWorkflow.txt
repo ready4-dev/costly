@@ -1,0 +1,17 @@
+Costing Workflow
+
+1. Design RUQ
+2. Integrate RUQ into survey instrument [Word, PDF, Qualtrics, REDCap]
+3. Import survey instrument into online tool
+4. Administer survey
+5. Import survey RUQ results into analysis software
+6. Clean RUQ results dataset
+7. Import administrative records resource use dataset
+8. Clean administrative records resource use dataset dataset
+9. Synthesise resource use datasets to create a consolidated costing dataset
+10. Create lookup dataset that itemises and groups resource use types
+11. Add unit cost for each resource use type item and group in the lookup dataset
+12. Apply relevant unit costs from lookup dataset to each case in costing dataset
+13. Total cost categories
+14. Analyse costs.
+
