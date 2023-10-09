@@ -1,13 +1,28 @@
 # From: https://stackoverflow.com/questions/60719592/r-built-in-list-of-currency-symbols
-get_currency_tbl <- function(what_1L_chr = "by_country_tb",
+get_currency_tbl <- function(type_1L_chr = "Country",#"by_country_tb",
                              indcs_int = c(2:3),
-                             names_chr = c("by_country_tb","by_currency_tb"),
-                             url_1L_chr = "https://en.wikipedia.org/wiki/List_of_circulating_currencies"){
-  currency_tbls_ls <- url_1L_chr %>% rvest::read_html() %>% rvest::html_table()
-  currency_tbls_ls <- currency_tbls_ls[indcs_int] %>%
-    stats::setNames(names_chr)
-  if(what_1L_chr %in% names_chr){
-    currency_xx <- currency_tbls_ls %>% purrr::pluck(what_1L_chr)
+                             url_1L_chr = "https://en.wikipedia.org/wiki/List_of_circulating_currencies",
+                             x_ready4show_correspondences = ready4show::ready4show_correspondences(),
+                             X_Ready4useRepos = ready4use::Ready4useRepos()){
+  if(identical(x_ready4show_correspondences, ready4show::ready4show_correspondences())){
+    x_ready4show_correspondences <- ready4show::renew.ready4show_correspondences(x_ready4show_correspondences, old_nms_chr = c("Country","Currency"),
+                                                                                 new_nms_chr = c("by_country_tb","by_currency_tb"))
+  }
+  if(Hmisc::capitalize(type_1L_chr) %in% x_ready4show_correspondences$old_nms_chr){
+    element_1L_chr <- ready4::get_from_lup_obj(x_ready4show_correspondences, match_var_nm_1L_chr = "old_nms_chr",
+                                               match_value_xx = Hmisc::capitalize(type_1L_chr), target_var_nm_1L_chr = "new_nms_chr")
+    indcs_int <- indcs_int[which(x_ready4show_correspondences$new_nms_chr == element_1L_chr)]
+    x_ready4show_correspondences <- ready4show::renew.ready4show_correspondences(x_ready4show_correspondences , filter_cdn_1L_chr = "new_nms_chr == element_1L_chr", element_1L_chr = element_1L_chr)
+  }
+  if(identical(X_Ready4useRepos, ready4use::Ready4useRepos())){
+    currency_tbls_ls <- url_1L_chr %>% rvest::read_html() %>% rvest::html_table()
+    currency_tbls_ls <- currency_tbls_ls[indcs_int] %>%
+      stats::setNames(x_ready4show_correspondences$new_nms_chr)
+  }else{
+    currency_tbls_ls <- ingest(X_Ready4useRepos, fls_to_ingest_chr = x_ready4show_correspondences$new_nms_chr, metadata_1L_lgl = F)
+  }
+  if(length(currency_tbls_ls) == 1){
+    currency_xx <- currency_tbls_ls %>% purrr::pluck(1)
   }else{
     currency_xx <- currency_tbls_ls
   }
@@ -28,28 +43,37 @@ get_currency <- function(country_1L_chr,
                          currency_tb = NULL,
                          format_1L_chr = "Name",
                          indcs_int = c(2:3),
-                         names_chr = c("by_country_tb","by_currency_tb"),
+                         #names_chr = c("by_country_tb","by_currency_tb"),
                          url_1L_chr = "https://en.wikipedia.org/wiki/List_of_circulating_currencies",
                          match_var_nm_1L_chr = "ISO code[2]",
-                         type_1L_chr = "by_country_tb",
-                         what_1L_chr = "Symbol[D] orAbbrev.[3]"){
+                         preferred_1L_chr = character(0),
+                         type_1L_chr = "Country",#"by_country_tb",
+                         what_1L_chr = "Symbol",#"Symbol[D] orAbbrev.[3]",
+                         x_ready4show_correspondences = ready4show::ready4show_correspondences(),
+                         y_ready4show_correspondences = ready4show::ready4show_correspondences()){
   if(format_1L_chr != "Alpha_3"){
-    country_1L_chr <- transform_country(country_1L_chr = country_1L_chr,
-                                        from_1L_chr = format_1L_chr)
+    country_1L_chr <- transform_country(country_1L_chr = country_1L_chr, from_1L_chr = format_1L_chr)
   }
   currency_1L_chr <- country_1L_chr %>%
     countrycode::countrycode("iso3c","iso4217c")
   if(!is.na(what_1L_chr)){ #stringr::str_detect(what_1L_chr, stringr::regex("code", ignore_case = T))
+    if(identical(x_ready4show_correspondences, ready4show::ready4show_correspondences())){
+      x_ready4show_correspondences <- ready4show::renew.ready4show_correspondences(x_ready4show_correspondences, old_nms_chr = c("Name","Symbol","Code","Unit", "Number"),
+                                                                                     new_nms_chr = c("Currency[1][2]","Symbol[D] orAbbrev.[3]","ISO code[2]","Fractionalunit","Numberto basic"))
+    }
     if(is.null(currency_tb)){
-      currency_tb <- get_currency_tbl(what_1L_chr = type_1L_chr,
+      currency_tb <- get_currency_tbl(type_1L_chr = type_1L_chr,
                                       indcs_int = indcs_int,
-                                      names_chr = names_chr,
-                                      url_1L_chr = url_1L_chr)
+                                      #names_chr = names_chr,
+                                      url_1L_chr = url_1L_chr,
+                                      x_ready4show_correspondences = y_ready4show_correspondences)
     }
    currency_1L_chr <- currency_tb[which(currency_1L_chr ==(currency_tb[,which(names(currency_tb) == match_var_nm_1L_chr)] %>%
                                                              unlist() %>% as.vector()))[1],
-                                  which(names(currency_tb) == what_1L_chr)][[1,1]]
-
+                                  which(names(currency_tb) == ready4::get_from_lup_obj(x_ready4show_correspondences,
+                                                                                       match_var_nm_1L_chr = "old_nms_chr",
+                                                                                       match_value_xx = Hmisc::capitalize(what_1L_chr),
+                                                                                       target_var_nm_1L_chr = "new_nms_chr"))][[1,1]]
   }
   return(currency_1L_chr)
 }
@@ -233,8 +257,6 @@ get_timezone <- function(country_1L_chr, ## Depends on maps package
 
   lutz::tz_lookup_coords(lat = latitude_1L_dbl, lon = longitude_1L_dbl, method = method_1L_chr)
 }
-A <- vicinity::VicinityProfile()
-A@country_chr <- "Australia"
 make_currency_ls <- function(country_1L_chr,
                              currency_tb = NULL,
                              format_1L_chr = "Name",
@@ -251,7 +273,8 @@ make_currency_ls <- function(country_1L_chr,
                                          match_var_nm_1L_chr = match_var_nm_1L_chr,
                                          what_1L_chr = what_1L_chr)
 }
-
+# A <- vicinity::VicinityProfile()
+# A@country_chr <- "Australia"
 # ready4::get_from_lup_obj(ISOcodes::ISO_3166_1,
 #                          match_value_xx = country_1L_chr,
 #                          match_var_nm_1L_chr = "Name",
