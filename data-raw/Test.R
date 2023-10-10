@@ -1,3 +1,36 @@
+## Retrieve from repo
+## Apply to grouped ds
+## Create repos
+## Validate
+get_standardised_dss <- function(X_Ready4useRepos,
+                                 type_1L_chr = "Country",
+                                 what_chr = make_ds_names(file_nm_1L_lgl = F)){
+  what_chr <- match.arg(what_chr, several.ok = T)
+  standardised_dss_ls <- ingest(X_Ready4useRepos, fls_to_ingest_chr = make_ds_names(type_1L_chr, what_chr = what_chr), metadata_1L_lgl = F)
+  if(length(standardised_dss_ls) == 1){
+    standardised_dss_xx <- standardised_dss_ls %>% purrr::pluck(1)
+    }else{
+      standardised_dss_xx <- standardised_dss_ls
+      }
+  return(standardised_dss_xx)
+}
+make_ds_names <- function(type_1L_chr = "Country",
+                          file_nm_1L_lgl = T,
+                          what_chr = c("Comparisons", "Correspondences", "Seed", "Standard", "Validated")){
+  options_chr <- c("Comparisons", "Correspondences", "Seed", "Standard", "Validated")
+  what_chr <- match.arg(what_chr, several.ok = T) %>% sort()
+  if(file_nm_1L_lgl){
+    correspondences_chr <- what_chr %>% purrr::map_chr(~ready4::get_from_lup_obj(ready4show::renew.ready4show_correspondences(ready4show::ready4show_correspondences(),
+                                                                                                 old_nms_chr = options_chr,
+                                                                                                 new_nms_chr = paste0(type_1L_chr,"_",options_chr)),
+                                                                                 match_var_nm_1L_chr = "old_nms_chr",
+                                                                                 match_value_xx = .x,
+                                                                                 target_var_nm_1L_chr = "new_nms_chr"))
+  }else{
+    correspondences_chr <- what_chr
+  }
+  return(correspondences_chr)
+}
 get_currency <- function(country_1L_chr,
                          case_when_false_1L_chr = NA_character_,
                          case_when_true_1L_chr = NA_character_,
@@ -6,7 +39,7 @@ get_currency <- function(country_1L_chr,
                          country_var_nms_chr = c("State or territory[1]","Countries/ territories"),
                          currency_tb = NULL,
                          filter_cdn_1L_chr = NA_character_,
-                         force_ISO_1L_lgl = F,
+                         force_standard_1L_lgl = F,
                          format_1L_chr = "Name",
                          fuzzy_logic_1L_chr = "jw",
                          indcs_int = c(2:3),
@@ -38,7 +71,7 @@ get_currency <- function(country_1L_chr,
                                         case_when_var_1L_chr = case_when_var_1L_chr,
                                         country_var_nms_chr = country_var_nms_chr,
                                         filter_cdn_1L_chr = filter_cdn_1L_chr,
-                                        force_ISO_1L_lgl = force_ISO_1L_lgl,
+                                        force_standard_1L_lgl = force_standard_1L_lgl,
                                         fuzzy_logic_1L_chr = fuzzy_logic_1L_chr,
                                         indcs_int =indcs_int,
                                         max_distance_1L_dbl = max_distance_1L_dbl,
@@ -96,17 +129,22 @@ get_timezone <- function(country_1L_chr, ## Depends on maps package
 
   lutz::tz_lookup_coords(lat = latitude_1L_dbl, lon = longitude_1L_dbl, method = method_1L_chr)
 }
-make_cities_df <- function(case_when_false_1L_chr = NA_character_,
+make_cities_dss <- function(case_when_false_1L_chr = NA_character_,
                            case_when_true_1L_chr = NA_character_,
                            case_when_true_ls = NULL,
                            case_when_var_1L_chr = NA_character_,
                            country_var_nm_1L_chr = "country.etc",
                            filter_cdn_1L_chr = NA_character_,
-                           force_ISO_1L_lgl = F,
-                           fuzzy_logic_1L_chr = "jw",
+                           force_standard_1L_lgl = F,
+                           fuzzy_logic_1L_chr = character(0),
                            max_distance_1L_dbl = Inf,
                            seed_df = NULL,
+                           sort_1L_lgl = F,
+                           standards_df = data.frame(),
+                           standards_var_nms_chr = c("Name", "Official_name", "Common_name", "Alpha_3", "Alpha_2"),
                            tf_false_val_1L_lgl = T,
+                           what_chr = make_ds_names(file_nm_1L_lgl = F),
+                           type_1L_chr = "Cities",
                            x_ready4show_correspondences = ready4show::ready4show_correspondences()){
   if(is.null(seed_df)){
     utils::data("world.cities", package = "maps", envir = environment())
@@ -123,6 +161,23 @@ make_cities_df <- function(case_when_false_1L_chr = NA_character_,
       case_when_true_ls <- list(capital = "name == 'Pristina' ~ 1")
       case_when_var_1L_chr <- case_when_false_1L_chr <- "capital"
     }
+    if(identical(standards_df, data.frame())){
+      utils::data("ISO_3166_1", package = "ISOcodes", envir = environment())
+      standards_df <- ISO_3166_1
+      rm(ISO_3166_1)
+    }
+    # fuzzy_logic_1L_chr <- "jw"
+    if(identical(fuzzy_logic_1L_chr, character(0))){
+      x_ready4show_correspondences <- update_country_correspondences(x_ready4show_correspondences = x_ready4show_correspondences,
+                                                                     countries_df = seed_df,
+                                                                     country_var_nm_1L_chr = country_var_nm_1L_chr,
+                                                                     force_standard_1L_lgl = force_standard_1L_lgl,
+                                                                     fuzzy_logic_1L_chr = "jw",
+                                                                     max_distance_1L_dbl = max_distance_1L_dbl,
+                                                                     standards_df = standards_df,
+                                                                     standards_var_nms_chr = standards_var_nms_chr)
+    }
+    fuzzy_logic_1L_chr <- character(0)
   }
   cities_df <- update_countries_df(seed_df,
                                    x_ready4show_correspondences = x_ready4show_correspondences,
@@ -132,11 +187,61 @@ make_cities_df <- function(case_when_false_1L_chr = NA_character_,
                                    case_when_var_1L_chr = case_when_var_1L_chr,
                                    country_var_nm_1L_chr = country_var_nm_1L_chr,
                                    filter_cdn_1L_chr = filter_cdn_1L_chr,
-                                   force_ISO_1L_lgl = force_ISO_1L_lgl,
+                                   force_standard_1L_lgl = force_standard_1L_lgl,
                                    fuzzy_logic_1L_chr = fuzzy_logic_1L_chr,
                                    max_distance_1L_dbl = max_distance_1L_dbl,
+                                   standards_df = standards_df,
+                                   standards_var_nms_chr = standards_var_nms_chr,
                                    tf_false_val_1L_lgl = tf_false_val_1L_lgl)
-  return(cities_df)
+  validation_ls <- make_validation_ls(standards_df %>% dplyr::pull(standards_var_nms_chr[1]),
+                                      ds_df = cities_df,
+                                      var_nm_1L_chr = country_var_nm_1L_chr,
+                                      sort_1L_lgl = sort_1L_lgl)
+  cities_dss_ls <- make_standardised_dss("Cities",
+                                         comparisons_df = cities_df,
+                                         seed_df = seed_df,
+                                         standards_df = standards_df,
+                                         validation_ls = validation_ls,
+                                         x_ready4show_correspondences = x_ready4show_correspondences,
+                                         what_chr = what_chr)
+  return(cities_dss_ls)
+}
+make_currencies_dss <- function(){
+
+}
+make_standardised_dss <- function(type_1L_chr = "Country",
+                                  comparisons_df = data.frame(),
+                                  seed_df = data.frame(),
+                                  standards_df = data.frame(),
+                                  validation_ls = list(),
+                                  x_ready4show_correspondences = ready4show::ready4show_correspondences(),
+                                  what_chr = make_ds_names(file_nm_1L_lgl = F)){
+  what_chr <- match.arg(what_chr, several.ok = T)
+  standardised_dss_ls <- list(comparisons_df, x_ready4show_correspondences, seed_df, standards_df, validation_ls) %>% stats::setNames(make_ds_names(type_1L_chr))
+  standardised_dss_ls <- standardised_dss_ls[make_ds_names(type_1L_chr, what_chr = what_chr)]
+  return(standardised_dss_ls)
+}
+make_validation_ls <- function(allowed_xx,
+                               ds_df,
+                               var_nm_1L_chr,
+                               sort_1L_lgl = F){
+  type_chr <- c("Absent", "Valid", "Invalid", "Valid", "Invalid")
+  what_chr <- c(rep("Values", 3), rep("Cases", 2))
+  validation_ls <- purrr::map2(type_chr,
+                                what_chr,
+                                ~ make_validation_output(allowed_xx %>% sort(), ds_df = ds_df, var_nm_1L_chr = var_nm_1L_chr, sort_1L_lgl = sort_1L_lgl, type_1L_chr = .x, what_1L_chr = .y)) %>%
+    stats::setNames(purrr::map2_chr(type_chr, what_chr, ~paste0(.x,"_",.y)))
+  return(validation_ls)
+  #make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Absent", what_1L_chr = "Values")
+  #make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Values")
+  #make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Values")
+  #make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Cases")
+  #make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Cases")
+  # make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Absent", what_1L_chr = "Values")
+  # make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Values")
+  # make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Values")
+  # make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Cases")
+  # make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Cases")
 }
 make_currencies_df <- function(case_when_false_1L_chr = NA_character_,
                                case_when_true_1L_chr = NA_character_,
@@ -145,11 +250,13 @@ make_currencies_df <- function(case_when_false_1L_chr = NA_character_,
                                #country_var_nm_1L_chr = "country.etc",
                                country_var_nms_chr = c("State or territory[1]","Countries/ territories"),
                                filter_cdn_1L_chr = NA_character_,
-                               force_ISO_1L_lgl = F,
-                               fuzzy_logic_1L_chr = "jw",
+                               force_standard_1L_lgl = F,
+                               fuzzy_logic_1L_chr = character(0),#"jw",
                                indcs_int = c(2:3),
                                max_distance_1L_dbl = Inf,
                                seed_df = NULL,
+                               standards_df = data.frame(),
+                               standards_var_nms_chr = c("Name", "Official_name", "Common_name", "Alpha_3", "Alpha_2"),
                                tf_false_val_1L_lgl = T,
                                type_1L_chr = c("Country","Currency"),
                                url_1L_chr = "https://en.wikipedia.org/wiki/List_of_circulating_currencies",
@@ -169,9 +276,24 @@ make_currencies_df <- function(case_when_false_1L_chr = NA_character_,
                                Guernsey = "Bailiwick of Guernsey", `Timor-Leste` = "East Timor", `Korea, Democratic People's Republic of` = "Korea, North", Kosovo = "Kosovo", `Northern Cyprus`= "Northern Cyprus", `Bonaire, Sint Eustatius and Saba` = "Saba",
                                `Western Sahara` = "Sahrawi Republic", `Somaliland` = "Somaliland", `South Ossetia` = "South Ossetia", Transnistria = "Transnistria", `Holy See (Vatican City State)`= "Vatican City")
       x_ready4show_correspondences <- ready4show::renew.ready4show_correspondences(x_ready4show_correspondences,
-                                                                                  old_nms_chr = unname(correspondences_chr),
-                                                                                  new_nms_chr = names(correspondences_chr))
+                                                                                   old_nms_chr = unname(correspondences_chr),
+                                                                                   new_nms_chr = names(correspondences_chr))
     }
+  }
+  if(!identical(fuzzy_logic_1L_chr, character(0))){ # ie, update skipped if not supplying logic
+    if(identical(standards_df, data.frame())){
+      utils::data("ISO_3166_1", package = "maps", envir = environment())
+      standards_df <- ISO_3166_1
+      rm(ISO_3166_1)
+    }
+    x_ready4show_correspondences <- update_country_correspondences(x_ready4show_correspondences = x_ready4show_correspondences,
+                                                                   countries_df = seed_df,
+                                                                   country_var_nm_1L_chr = country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
+                                                                   force_standard_1L_lgl = force_standard_1L_lgl,
+                                                                   fuzzy_logic_1L_chr = fuzzy_logic_1L_chr,
+                                                                   max_distance_1L_dbl = max_distance_1L_dbl,
+                                                                   standards_df = standards_df,
+                                                                   standards_var_nms_chr = standards_var_nms_chr)
   }
   currencies_df <- update_countries_df(seed_df,
                                        x_ready4show_correspondences = x_ready4show_correspondences,
@@ -181,8 +303,8 @@ make_currencies_df <- function(case_when_false_1L_chr = NA_character_,
                                        case_when_var_1L_chr = case_when_var_1L_chr,
                                        country_var_nm_1L_chr = country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
                                        filter_cdn_1L_chr = filter_cdn_1L_chr,
-                                       force_ISO_1L_lgl = force_ISO_1L_lgl,
-                                       fuzzy_logic_1L_chr = fuzzy_logic_1L_chr,
+                                       force_standard_1L_lgl = force_standard_1L_lgl,
+                                       fuzzy_logic_1L_chr = character(0), #fuzzy_logic_1L_chr,
                                        max_distance_1L_dbl = max_distance_1L_dbl,
                                        tf_false_val_1L_lgl = tf_false_val_1L_lgl)
   return(currencies_df)
@@ -204,14 +326,14 @@ make_currency_ls <- function(country_1L_chr,
                                          what_1L_chr = what_1L_chr)
 }
 make_validation_output <- function(allowed_xx,
-                                   ds_tb,
+                                   ds_df,
                                    var_nm_1L_chr,
                                    sort_1L_lgl = F,
                                    type_1L_chr = "Valid",
                                    what_1L_chr = "Cases"){
-  if(is.data.frame(ds_tb) & !tibble::is.tibble(ds_tb)){
-    ds_tb <- tibble::as_tibble(ds_tb)
-    message("ds_tb has been converted to a tibble")
+  if(is.data.frame(ds_df) & !tibble::is_tibble(ds_df)){
+    ds_tb <- tibble::as_tibble(ds_df)
+    message("ds_df has been converted to a tibble")
   }
   output_xx <- NULL
   if(what_1L_chr %in% c("cases","Cases")){
@@ -231,9 +353,8 @@ make_validation_output <- function(allowed_xx,
       output_xx <- setdiff(test_xx, allowed_xx)
     }
     if(type_1L_chr %in% c("absent", "Absent")){
-      output_xx <- setdiff(allowed_xx,test_xx)
+      output_xx <- setdiff(allowed_xx, test_xx)
     }
-
   }
   if(sort_1L_lgl & !is.null(output_xx)){
     if(tibble::is_tibble(output_xx)){
@@ -255,33 +376,9 @@ transform_country <- function(country_1L_chr, # Belongs in vicinity
   }
   return(country_1L_chr)
 }
-# update_cities_df <- function(cities_df,
-#                              x_ready4show_correspondences = ready4show::ready4show_correspondences(),
-#                              case_when_false_1L_chr = NA_character_,
-#                              case_when_true_1L_chr = NA_character_,
-#                              case_when_true_ls = NULL,
-#                              case_when_var_1L_chr = NA_character_,
-#                              country_var_nm_1L_chr = "country.etc",
-#                              filter_cdn_1L_chr = NA_character_,
-#                              force_ISO_1L_lgl = F,
-#                              fuzzy_logic_1L_chr = "jw",
-#                              max_distance_1L_dbl = Inf,
-#                              tf_false_val_1L_lgl = T){
-#   cities_df <- update_countries_df(cities_df,
-#                                    x_ready4show_correspondences = x_ready4show_correspondences,
-#                                    case_when_false_1L_chr = case_when_false_1L_chr,
-#                                    case_when_true_1L_chr = case_when_true_1L_chr,
-#                                    case_when_true_ls = case_when_true_ls,
-#                                    case_when_var_1L_chr = case_when_var_1L_chr,
-#                                    country_var_nm_1L_chr = country_var_nm_1L_chr,
-#                                    filter_cdn_1L_chr = filter_cdn_1L_chr,
-#                                    force_ISO_1L_lgl = force_ISO_1L_lgl,
-#                                    fuzzy_logic_1L_chr = fuzzy_logic_1L_chr,
-#                                    max_distance_1L_dbl = max_distance_1L_dbl,
-#                                    tf_false_val_1L_lgl = tf_false_val_1L_lgl)
-#   return(cities_df)
-# }
 update_countries_df <- function(countries_df,
+                                standards_df,# = data.frame(),
+                                standards_var_nms_chr,# = c("Name", "Official_name", "Common_name", "Alpha_3", "Alpha_2"),
                                 x_ready4show_correspondences = ready4show::ready4show_correspondences(),
                                 case_when_false_1L_chr = NA_character_,
                                 case_when_true_1L_chr = NA_character_,
@@ -289,16 +386,20 @@ update_countries_df <- function(countries_df,
                                 case_when_var_1L_chr = NA_character_,
                                 country_var_nm_1L_chr = "country.etc",
                                 filter_cdn_1L_chr = NA_character_,
-                                force_ISO_1L_lgl = F,
-                                fuzzy_logic_1L_chr = "jw",
+                                force_standard_1L_lgl = F,
+                                fuzzy_logic_1L_chr = character(0),
                                 max_distance_1L_dbl = Inf,
                                 tf_false_val_1L_lgl = T){
-  x_ready4show_correspondences <- update_country_correspondences(x_ready4show_correspondences = x_ready4show_correspondences,
-                                                                 countries_df = countries_df,
-                                                                 country_var_nm_1L_chr = country_var_nm_1L_chr,
-                                                                 force_ISO_1L_lgl = force_ISO_1L_lgl,
-                                                                 fuzzy_logic_1L_chr = fuzzy_logic_1L_chr,
-                                                                 max_distance_1L_dbl = max_distance_1L_dbl)
+  if(!identical(fuzzy_logic_1L_chr, character(0))){ # Strictly not necessary, but reminder how to avoid modifying correspondences
+    x_ready4show_correspondences <- update_country_correspondences(x_ready4show_correspondences = x_ready4show_correspondences,
+                                                                   countries_df = countries_df,
+                                                                   country_var_nm_1L_chr = country_var_nm_1L_chr,
+                                                                   force_standard_1L_lgl = force_standard_1L_lgl,
+                                                                   fuzzy_logic_1L_chr = fuzzy_logic_1L_chr,
+                                                                   max_distance_1L_dbl = max_distance_1L_dbl,
+                                                                   standards_df = standards_df,
+                                                                   standards_var_nms_chr = standards_var_nms_chr)
+  }
   countries_df <- countries_df %>% dplyr::mutate(!!rlang::sym(country_var_nm_1L_chr) := !!rlang::sym(country_var_nm_1L_chr) %>%
                                                    purrr::map_chr(~ifelse(.x %in% x_ready4show_correspondences$old_nms_chr, # Replace when manufacture method is fixed.
                                                                           ready4::get_from_lup_obj(x_ready4show_correspondences,
@@ -306,7 +407,7 @@ update_countries_df <- function(countries_df,
                                                                                                    match_var_nm_1L_chr = "old_nms_chr",
                                                                                                    target_var_nm_1L_chr = "new_nms_chr"),
                                                                           .x)))
-  if(force_ISO_1L_lgl){
+  if(force_standard_1L_lgl){
     countries_df <- countries_df %>%
       dplyr::filter(!!rlang::sym(country_var_nm_1L_chr) %in% ISOcodes::ISO_3166_1$Name)
   }
@@ -316,49 +417,61 @@ update_countries_df <- function(countries_df,
   return(countries_df)
 }
 update_country_correspondences <- function(x_ready4show_correspondences = ready4show::ready4show_correspondences(),
+                                           standards_df,# = data.frame(),
+                                           standards_var_nms_chr,# = c("Name", "Official_name", "Common_name", "Alpha_3", "Alpha_2")
                                            countries_df = NULL,
                                            country_var_nm_1L_chr = "country.etc",
-                                           force_ISO_1L_lgl = T,
+                                           force_standard_1L_lgl = T,
                                            fuzzy_logic_1L_chr = "jw",
-                                           max_distance_1L_dbl = Inf){
+                                           max_distance_1L_dbl = Inf
+                                           ){
+  # if(identical(standards_df, data.frame())){
+  #   utils::data("ISO_3166_1", package = "ISOcodes", envir = environment())
+  #   standards_df <- ISO_3166_1
+  #   rm(ISO_3166_1)
+  # }
   if(!identical(fuzzy_logic_1L_chr, character(0))){
     countries_chr <- countries_df %>%
       dplyr::pull(country_var_nm_1L_chr) %>%
       unique() %>% sort()
     matched_ls <- countries_chr %>%
-      purrr::map(~ c(.x %in% ISOcodes::ISO_3166_1$Name,
-                     .x %in% ISOcodes::ISO_3166_1$Official_name,
-                     .x %in% ISOcodes::ISO_3166_1$Common_name,
-                     .x %in% ISOcodes::ISO_3166_1$Alpha_3,
-                     .x %in% ISOcodes::ISO_3166_1$Alpha_2)) %>%
+      purrr::map(~ {
+        country_1L_chr <- .x
+        standards_var_nms_chr %>%
+          purrr::map_lgl(~ country_1L_chr %in% (standards_df %>% dplyr::pull(.x)))
+      }
+                 ) %>%
       stats::setNames(countries_chr)
     y_ready4show_correspondences <- purrr::map2_dfr(matched_ls, names(matched_ls),
                                                     ~ {
-
-                                                      replace_1L_chr <- c(NA_character_, "Official_name", "Common_name", "Alpha_3", "Alpha_2")[which(.x)[1]]
+                                                      if(length(standards_var_nms_chr)>1){
+                                                        options_chr <- c(NA_character_, standards_var_nms_chr[2:length(standards_var_nms_chr)])
+                                                      }else{
+                                                        options_chr <- c(NA_character_)
+                                                      }
+                                                      replace_1L_chr <- options_chr[which(.x)[1]]
                                                       if(identical(replace_1L_chr, character(0)))
                                                         replace_1L_chr <- NA_character_
-                                                      with_1L_chr <- ifelse(any(.x[2:5]),"Name",NA_character_)
+                                                      with_1L_chr <- ifelse(any(.x[2:5]),standards_var_nms_chr[1],NA_character_)
 
                                                       if(is.na(replace_1L_chr) | is.na(with_1L_chr)){
-                                                        ready4show::make_pt_ready4show_correspondences(#old_nms_chr = NA_character_, new_nms_chr = NA_character_
-                                                        )
+                                                        ready4show::make_pt_ready4show_correspondences()
                                                       }else{
                                                         ready4show::make_pt_ready4show_correspondences(old_nms_chr = .y,
-                                                                                                       new_nms_chr = ready4::get_from_lup_obj(ISOcodes::ISO_3166_1,
+                                                                                                       new_nms_chr = ready4::get_from_lup_obj(standards_df,
                                                                                                                                               match_value_xx = .y,
                                                                                                                                               match_var_nm_1L_chr = replace_1L_chr,
                                                                                                                                               target_var_nm_1L_chr = with_1L_chr))
-                                                      }
+                                                        }
                                                     }) %>% ready4show::ready4show_correspondences()
-
     x_ready4show_correspondences <- dplyr::bind_rows(x_ready4show_correspondences,
                                                      y_ready4show_correspondences) %>%
       dplyr::arrange(old_nms_chr)
     matched_lgl <- purrr::map_lgl(matched_ls, ~ any(.x))
-    matches_chr <- names(matched_lgl)[matched_lgl]#(countries_df %>% dplyr::pull(country_var_nm_1L_chr) %>% unique())[matched_lgl] %>% sort()
-    unmatched_tb <- ISOcodes::ISO_3166_1 %>% dplyr::filter(!Name %in% matches_chr & !Official_name %in% matches_chr & !Common_name %in% matches_chr & !Alpha_3 %in% matches_chr & !Alpha_2 %in% matches_chr)
-    unmatched_chr <- setdiff(names(matched_lgl),matches_chr) #(countries_df %>% dplyr::pull(country_var_nm_1L_chr) %>% unique())[!matched_lgl] %>% sort()
+    matches_chr <- names(matched_lgl)[matched_lgl]
+    unmatched_tb <- standards_df %>%
+      dplyr::filter_at(dplyr::vars(tidyselect::all_of(standards_var_nms_chr)), dplyr::all_vars(!. %in% matches_chr))
+    unmatched_chr <- setdiff(names(matched_lgl),matches_chr)
     z_ready4show_correspondences <- ready4show::make_pt_ready4show_correspondences(old_nms_chr = unmatched_chr,
                                                                                    new_nms_chr = (unmatched_tb %>% dplyr::pull(Name))[stringdist::amatch(unmatched_chr,
                                                                                                                                                          unmatched_tb %>%
@@ -372,10 +485,9 @@ update_country_correspondences <- function(x_ready4show_correspondences = ready4
                                                      z_ready4show_correspondences) %>%
       dplyr::arrange(old_nms_chr)
   }
-  # no_cities_chr <- setdiff(unmatched_tb$Name, x_ready4show_correspondences$new_nms_chr %>% unique())
-  if(force_ISO_1L_lgl){
+  if(force_standard_1L_lgl){
     x_ready4show_correspondences <- x_ready4show_correspondences %>%
-      dplyr::filter(new_nms_chr %in% ISOcodes::ISO_3166_1$Name)
+      dplyr::filter(new_nms_chr %in% standards_df$Name)
   }
   return(x_ready4show_correspondences)
 }
@@ -409,16 +521,16 @@ update_currency_correspondences <- function(x_ready4show_correspondences = ready
 #
 # }
 
-#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Absent", what_1L_chr = "Values")
-#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Values")
-#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Values")
-#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Cases")
-#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Cases")
-# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Absent", what_1L_chr = "Values")
-# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Values")
-# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Values")
-# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Cases")
-# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_tb = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Cases")
+#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Absent", what_1L_chr = "Values")
+#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Values")
+#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Values")
+#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Cases")
+#make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = cities_df, var_nm_1L_chr = "country.etc", sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Cases")
+# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Absent", what_1L_chr = "Values")
+# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Values")
+# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Values")
+# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Valid", what_1L_chr = "Cases")
+# make_validation_output(ISOcodes::ISO_3166_1$Name %>% sort(),ds_df = currencies_df, var_nm_1L_chr = country_var_nms_chr[1], sort_1L_lgl = T, type_1L_chr = "Invalid", what_1L_chr = "Cases")
 
 # A <- vicinity::VicinityProfile()
 # A@country_chr <- "Australia"
