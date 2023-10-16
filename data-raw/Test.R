@@ -45,6 +45,7 @@ get_currency <- function(country_1L_chr,
                          seed_df = NULL,
                          match_var_nm_1L_chr = "ISO code[2]",
                          max_distance_1L_dbl = Inf,
+                         target_var_nm_1L_chr = "Alpha_3",
                          tf_false_val_1L_lgl = T,
                          type_1L_chr = "Country",
                          url_1L_chr = "https://en.wikipedia.org/wiki/List_of_circulating_currencies",
@@ -53,8 +54,8 @@ get_currency <- function(country_1L_chr,
                          x_ready4show_correspondences = ready4show::ready4show_correspondences(),
                          y_ready4show_correspondences = ready4show::ready4show_correspondences(),
                          X_Ready4useRepos = ready4use::Ready4useRepos()){
-  if(format_1L_chr != "Alpha_3"){
-    country_1L_chr <- transform_country(country_1L_chr = country_1L_chr, from_1L_chr = format_1L_chr)
+  if(format_1L_chr != target_var_nm_1L_chr){
+    country_1L_chr <- transform_country(country_1L_chr = country_1L_chr, from_1L_chr = format_1L_chr, what_1L_chr = target_var_nm_1L_chr)
   }
   currency_1L_chr <- country_1L_chr %>%
     countrycode::countrycode("iso3c","iso4217c")
@@ -64,7 +65,7 @@ get_currency <- function(country_1L_chr,
                                                                                    new_nms_chr = c("Currency[1][2]","Symbol[D] orAbbrev.[3]","ISO code[2]","Fractionalunit","Numberto basic"))
     }
     if(is.null(currency_tb)){
-      currency_tb <- make_currencies_dss(case_when_false_1L_chr = case_when_false_1L_chr,
+      currency_tb <- make_currencies_dss(case_when_false_1L_chr = case_when_false_1L_chr, # Replace with get_standardised_dss
                                         case_when_true_1L_chr = case_when_true_1L_chr,
                                         case_when_true_ls = case_when_true_ls,
                                         case_when_var_1L_chr = case_when_var_1L_chr,
@@ -79,7 +80,7 @@ get_currency <- function(country_1L_chr,
                                         type_1L_chr = type_1L_chr,
                                         url_1L_chr = url_1L_chr,
                                         x_ready4show_correspondences = y_ready4show_correspondences,
-                                        X_Ready4useRepos = X_Ready4useRepos)$Currencies_By_Country_Comparisons
+                                        X_Ready4useRepos = X_Ready4useRepos)$Currencies_By_Country_Lookup
     }
     currency_1L_chr <- currency_tb[which(currency_1L_chr == (currency_tb[,which(names(currency_tb) == match_var_nm_1L_chr)] %>%
                                                               unlist() %>% as.vector()))[1],
@@ -205,7 +206,7 @@ get_timezone <- function(country_1L_chr, ## Depends on maps package
 
   lutz::tz_lookup_coords(lat = latitude_1L_dbl, lon = longitude_1L_dbl, method = method_1L_chr)
 }
-make_currency_ls <- function(country_1L_chr,
+make_currency_ls <- function(country_1L_chr, # Needs upating
                              currency_tb = NULL,
                              format_1L_chr = "Name",
                              match_var_nm_1L_chr = "ISO code[2]", # update with fn
@@ -221,10 +222,10 @@ make_currency_ls <- function(country_1L_chr,
                                          match_var_nm_1L_chr = match_var_nm_1L_chr,
                                          what_1L_chr = what_1L_chr)
 }
-make_defaults <- function(type_1L_chr = c("default", "country", "standardised"),
+make_defaults <- function(#type_1L_chr = c("default", "standardised"), #"country",
                           what_1L_chr = c("all", "arguments", "correspondences", "logic", "seed", "reference"),
                           force_standard_1L_lgl = F){
-  type_1L_chr <- match.arg(type_1L_chr)
+  #type_1L_chr <- match.arg(type_1L_chr)
   what_1L_chr <- match.arg(what_1L_chr)
   default_ls <- list(args_ls = list(case_when_false_1L_chr = NA_character_,
                                     case_when_true_1L_chr = NA_character_,
@@ -236,12 +237,12 @@ make_defaults <- function(type_1L_chr = c("default", "country", "standardised"),
                      seed_df = data.frame(),
                      seed_var_nms_chr = NA_character_,
                      x_ready4show_correspondences = ready4show::make_pt_ready4show_correspondences())
-  if(type_1L_chr == "country"){
-    default_ls <- update_country_default_ls(default_ls,
-                                            force_standard_1L_lgl = force_standard_1L_lgl,
-                                            what_1L_chr = what_1L_chr)
-
-  }
+  # if(type_1L_chr == "country"){
+  #   default_ls <- update_country_default_ls(default_ls,
+  #                                           force_standard_1L_lgl = force_standard_1L_lgl,
+  #                                           what_1L_chr = what_1L_chr)
+  #
+  # }
   default_xx <- default_ls
   if(what_1L_chr == c("arguments")){
     default_xx <- default_xx$args_ls
@@ -262,8 +263,8 @@ make_defaults <- function(type_1L_chr = c("default", "country", "standardised"),
 }
 make_ds_names <- function(type_1L_chr = "Country",
                           file_nm_1L_lgl = T,
-                          what_chr = c("Comparisons", "Correspondences", "Seed", "Standard", "Validated")){
-  options_chr <- c("Comparisons", "Correspondences", "Seed", "Standard", "Validated")
+                          what_chr = c("Lookup", "Correspondences", "Seed", "Standard", "Validation")){
+  options_chr <- c("Lookup", "Correspondences", "Seed", "Standard", "Validation")
   what_chr <- match.arg(what_chr, several.ok = T) %>% sort()
   if(file_nm_1L_lgl){
     correspondences_chr <- what_chr %>% purrr::map_chr(~ready4::get_from_lup_obj(ready4show::renew.ready4show_correspondences(ready4show::ready4show_correspondences(),
@@ -278,14 +279,14 @@ make_ds_names <- function(type_1L_chr = "Country",
   return(correspondences_chr)
 }
 make_standardised_dss <- function(type_1L_chr = "Country",
-                                  comparisons_df = data.frame(),
+                                  lookup_df = data.frame(),
                                   seed_df = data.frame(),
                                   standards_df = data.frame(),
                                   validation_ls = list(),
                                   x_ready4show_correspondences = ready4show::ready4show_correspondences(),
                                   what_chr = make_ds_names(file_nm_1L_lgl = F)){
   what_chr <- match.arg(what_chr, several.ok = T)
-  standardised_dss_ls <- list(comparisons_df, x_ready4show_correspondences, seed_df, standards_df, validation_ls) %>% stats::setNames(make_ds_names(type_1L_chr))
+  standardised_dss_ls <- list(x_ready4show_correspondences, lookup_df, seed_df, standards_df, validation_ls) %>% stats::setNames(make_ds_names(type_1L_chr))
   standardised_dss_ls <- standardised_dss_ls[make_ds_names(type_1L_chr, what_chr = what_chr)]
   return(standardised_dss_ls)
 }
@@ -353,12 +354,10 @@ transform_country <- function(country_1L_chr, # Belongs in vicinity
     rm(ISO_3166_1)
   }
   what_1L_chr <- match.arg(what_1L_chr, choices = setdiff(names(standards_df), from_1L_chr))
-  # if(what_1L_chr %in% setdiff(names(standards_df), from_1L_chr)){
     country_1L_chr <-  ready4::get_from_lup_obj(standards_df,
                                                 match_value_xx = country_1L_chr,
                                                 match_var_nm_1L_chr = from_1L_chr,
                                                 target_var_nm_1L_chr = what_1L_chr)
-  # }
   return(country_1L_chr)
 }
 update_correspondences <- function(x_ready4show_correspondences = ready4show::ready4show_correspondences(),
@@ -438,10 +437,11 @@ update_correspondences <- function(x_ready4show_correspondences = ready4show::re
   return(x_ready4show_correspondences)
 }
 update_country_default_ls <- function(default_ls,
-                                      force_standard_1L_lgl = F,
-                                      what_1L_chr = c("all", "arguments", "correspondences", "logic", "seed", "reference")){
-  what_1L_chr <- match.arg(what_1L_chr)
-  type_1L_chr <- "country"
+                                      force_standard_1L_lgl = F#,
+                                      # what_1L_chr = c("all", "arguments", "correspondences", "logic", "seed", "reference")
+                                      ){
+  #what_1L_chr <- match.arg(what_1L_chr)
+  #type_1L_chr <- "country"
   default_ls$args_ls$case_when_true_ls <- list(capital = "name == 'Pristina' ~ 1")
   default_ls$args_ls$case_when_var_1L_chr <- default_ls$args_ls$case_when_false_1L_chr <- "capital"
   default_ls$seed_df <- get_seed_cities()
@@ -480,6 +480,33 @@ update_currency_correspondences <- function(x_ready4show_correspondences = ready
     x_ready4show_correspondences <- ready4show::renew.ready4show_correspondences(x_ready4show_correspondences , filter_cdn_1L_chr = paste0("new_nms_chr == ", deparse(element_1L_chr)))
   }
   return(x_ready4show_correspondences)
+}
+update_currency_default_ls <- function(default_ls,
+                                       force_standard_1L_lgl = F#,
+                                       # what_1L_chr = c("all", "arguments", "correspondences", "logic", "seed", "reference")
+                                       ){
+  #"correspondences", "arguments", "force", "logic", "distance", "seed", "reference", "standards", "variables", "sharing"
+  # what_1L_chr <- match.arg(what_1L_chr)
+  # type_1L_chr <- "currency"
+  default_ls$seed_df <- get_seed_curencies()
+  default_ls$seed_var_nms_chr <- get_seed_curencies(T)
+  correspondences_chr <- c(Abkhazia = "Abkhazia", `Akrotiri and Dhekelia` = "Akrotiri and Dhekelia",
+                           Artsakh = "Artsakh", `Saint Helena, Ascension and Tristan da Cunha` = "Ascension Island", Congo = "Congo, Republic of the",
+                           Guernsey = "Bailiwick of Guernsey", `Timor-Leste` = "East Timor", `Korea, Democratic People's Republic of` = "Korea, North", Kosovo = "Kosovo", `Northern Cyprus`= "Northern Cyprus", `Bonaire, Sint Eustatius and Saba` = "Saba",
+                           `Western Sahara` = "Sahrawi Republic[I]", `Somaliland` = "Somaliland", `South Ossetia` = "South Ossetia", Transnistria = "Transnistria", `Holy See (Vatican City State)`= "Vatican City")
+  default_ls$x_ready4show_correspondences <- ready4show::renew.ready4show_correspondences(ready4show::ready4show_correspondences(),
+                                                                                          old_nms_chr = unname(correspondences_chr),
+                                                                                          new_nms_chr = names(correspondences_chr))
+  default_ls$x_ready4show_correspondences <- update_correspondences(x_ready4show_correspondences = default_ls$x_ready4show_correspondences,
+                                                                    seed_df = default_ls$seed_df,#get_seed_cities(),
+                                                                    reference_var_nm_1L_chr = default_ls$seed_var_nms_chr,
+                                                                    force_standard_1L_lgl = force_standard_1L_lgl,
+                                                                    fuzzy_logic_1L_chr = "jw",
+                                                                    max_distance_1L_dbl = Inf,
+                                                                    standards_df = get_country_standards(),
+                                                                    standards_var_nms_chr = get_country_standards(T))
+  default_ls$fuzzy_logic_1L_chr <- character(0)
+  return(default_ls)
 }
 update_module_slot <- function(x_r4, # Be careful about potentially making this a Method of Ready4Module - need to think through renew syntax
                                y_r3,
@@ -565,12 +592,12 @@ CostlyCorrespondences <- methods::setClass("CostlyCorrespondences",
                                                             standards_var_nms_chr = character(0)
                                                             #ds_tb = tibble::tibble(),dictionary_r3 = ready4use_dictionary()
                                           ))
-CostlyCountryCorrespondences <- methods::setClass("CostlyCountryCorrespondences",
-                                                  contains = "CostlyCorrespondences",
-                                                  prototype = list(fuzzy_logic_1L_chr = "jw", prefix_1L_chr = "Country", standards_df = get_country_standards(), standards_var_nms_chr = get_country_standards(T)))
-CostlyCurrencyCorrespondences <- methods::setClass("CostlyCurrencyCorrespondences",
-                                                   contains = "CostlyCorrespondences",
-                                                   prototype = list(prefix_1L_chr = "Currency", seed_var_nms_chr = c("State or territory[1]","Countries/ territories")))
+CostlyCountries <- methods::setClass("CostlyCountries",
+                                     contains = "CostlyCorrespondences",
+                                     prototype = list(fuzzy_logic_1L_chr = "jw", prefix_1L_chr = "Country", standards_df = get_country_standards(), standards_var_nms_chr = get_country_standards(T)))
+CostlyCurrencies <- methods::setClass("CostlyCurrencies",
+                                      contains = "CostlyCorrespondences",
+                                      prototype = list(prefix_1L_chr = "Currency", seed_var_nms_chr = c("State or territory[1]","Countries/ territories")))
 ## Methods
 methods::setMethod("manufacture", "CostlyCorrespondences", function(x,
                                                                     force_standard_1L_lgl = F,
@@ -578,10 +605,10 @@ methods::setMethod("manufacture", "CostlyCorrespondences", function(x,
                                                                     #prefix_1L_chr = "Standardised",
                                                                     sort_1L_lgl = T,
                                                                     type_chr = make_ds_names(file_nm_1L_lgl = F),
-                                                                    what_1L_chr = c("datasets", "defaults")
+                                                                    what_1L_chr = c("datasets", "defaults", "shorthand")
                                                                     ){
   what_1L_chr <- match.arg(what_1L_chr)
-  if(what_1L_chr %in% c("datasets", "defaults")){
+  if(what_1L_chr %in% c("datasets", "defaults", "shorthand")){
     if(what_1L_chr == "datasets"){
       # x <- renew(x, new_val_xx = new_val_xx, type_1L_chr = type_1L_chr, what_1L_chr = "correspondences", ...) # Better to do this step outside fn call
       ds_df <- update_with_standards(x@seed_df,
@@ -603,7 +630,7 @@ methods::setMethod("manufacture", "CostlyCorrespondences", function(x,
                                           var_nm_1L_chr = x@seed_var_nms_chr[1],
                                           sort_1L_lgl = sort_1L_lgl)
       object_xx <- make_standardised_dss(x@prefix_1L_chr,
-                                         comparisons_df = ds_df,
+                                         lookup_df = ds_df,
                                          seed_df = x@seed_df,
                                          standards_df = x@standards_df,
                                          validation_ls = validation_ls,
@@ -611,10 +638,42 @@ methods::setMethod("manufacture", "CostlyCorrespondences", function(x,
                                          what_chr = type_chr)
     }
     if(what_1L_chr == "defaults"){
-      object_xx <- make_defaults(x@prefix_1L_chr %>% tolower(),#"country",
-                                 force_standard_1L_lgl = x@force_standard_1L_lgl, what_1L_chr = "all")
+      object_xx <- make_defaults(force_standard_1L_lgl = x@force_standard_1L_lgl, what_1L_chr = "all") #x@prefix_1L_chr %>% tolower(),#"country",
     }
-  } else{
+    if(what_1L_chr == "shorthand"){
+      object_xx <- ready4show::ready4show_correspondences() %>% ready4show::renew.ready4show_correspondences(old_nms_chr = c("correspondences", "arguments", "force", "logic", "distance", "seed", "reference", "standards", "variables", "sharing"),
+                                                                                                new_nms_chr = methods::slotNames(x))
+    }
+  }else{
+    object_xx <- methods::callNextMethod()
+  }
+  return(object_xx)
+})
+methods::setMethod("manufacture", "CostlyCountries", function(x, # To write
+                                                              force_standard_1L_lgl = F,
+                                                              new_val_xx = NULL,
+                                                              sort_1L_lgl = T,
+                                                              type_chr = make_ds_names(file_nm_1L_lgl = F),
+                                                              what_1L_chr = c("datasets", "defaults", "shorthand")){
+  if(what_1L_chr == "defaults"){
+    object_xx <- NULL
+    object_xx <- methods::callNextMethod()
+    object_xx <- update_country_default_ls(object_xx, force_standard_1L_lgl = force_standard_1L_lgl)
+  }else{
+    object_xx <- methods::callNextMethod()
+  }
+  return(object_xx)
+})
+methods::setMethod("manufacture", "CostlyCurrencies", function(x, # To write
+                                                               force_standard_1L_lgl = F,
+                                                               new_val_xx = NULL,
+                                                               sort_1L_lgl = T,
+                                                               type_chr = make_ds_names(file_nm_1L_lgl = F),
+                                                               what_1L_chr = c("datasets", "defaults", "shorthand")){
+  if(what_1L_chr == "defaults"){
+    object_xx <- methods::callNextMethod()
+    object_xx <- update_currency_default_ls(object_xx, force_standard_1L_lgl = force_standard_1L_lgl)
+  }else{
     object_xx <- methods::callNextMethod()
   }
   return(object_xx)
@@ -622,7 +681,7 @@ methods::setMethod("manufacture", "CostlyCorrespondences", function(x,
 methods::setMethod("renew", "CostlyCorrespondences", # make method of CostlyCorrespondences
                    function (x, new_val_xx = NULL, type_1L_chr = "slot", what_1L_chr = "correspondences", ...) {
                      if(type_1L_chr == "default"){
-                       default_ls <- manufacture(x, what_1L_chr = "defaults") # Define this for each class, calling next method if what_1L_chr not equal to "defaults
+                       default_ls <- manufacture(x, what_1L_chr = "defaults") # Define this for each class, calling next method if what_1L_chr not equal to "defaults"
                        x@args_ls <- default_ls$args_ls
                        x@correspondences_r3 <- default_ls$x_ready4show_correspondences
                        x@fuzzy_logic_1L_chr <- default_ls$fuzzy_logic_1L_chr
@@ -630,8 +689,9 @@ methods::setMethod("renew", "CostlyCorrespondences", # make method of CostlyCorr
                        x@seed_var_nms_chr <- default_ls$seed_var_nms_chr
                      }
                      if(type_1L_chr %in% c("exploratory", "final","slot")){
-                       y <- ready4show::ready4show_correspondences() %>% ready4show::renew.ready4show_correspondences(old_nms_chr = c("correspondences", "arguments", "force", "logic", "distance",  "seed", "reference", "standards", "variables", "sharing"),
-                                                                                                                      new_nms_chr = methods::slotNames(x))
+                       y <- manufacture(x, what_1L_chr = "shorthand")
+                         # ready4show::ready4show_correspondences() %>% ready4show::renew.ready4show_correspondences(old_nms_chr = c("correspondences", "arguments", "force", "logic", "distance", "seed", "reference", "standards", "variables", "sharing"),
+                         #                                                                                              new_nms_chr = methods::slotNames(x))
                        what_1L_chr <- match.arg(what_1L_chr, choices = y$old_nms_chr)
                        if(what_1L_chr == "correspondences"){
                          if(is.null(new_val_xx)){
@@ -672,23 +732,24 @@ make_currencies_dss <- function(case_when_false_1L_chr = NA_character_,
                                 case_when_true_1L_chr = NA_character_,
                                 case_when_true_ls = NULL,
                                 case_when_var_1L_chr = NA_character_,
-                                country_var_nms_chr = c("State or territory[1]","Countries/ territories"),
+                                #country_var_nms_chr = c("State or territory[1]","Countries/ territories"),
                                 filter_cdn_1L_chr = NA_character_,
                                 force_standard_1L_lgl = F,
                                 fuzzy_logic_1L_chr = character(0),#"jw",
                                 indcs_int = c(2:3),
                                 max_distance_1L_dbl = Inf,
+                                reference_var_nm_1L_chr = "State or territory[1]", ## ADDN
                                 seed_df = NULL,
                                 sort_1L_lgl = T,
                                 standards_df = data.frame(),
                                 standards_var_nms_chr = c("Name", "Official_name", "Common_name", "Alpha_3", "Alpha_2"),
                                 tf_false_val_1L_lgl = T,
-                                type_1L_chr = c("Country","Currency"),
+                                #type_1L_chr = c("Country","Currency"),
                                 url_1L_chr = "https://en.wikipedia.org/wiki/List_of_circulating_currencies",
                                 what_chr = make_ds_names(file_nm_1L_lgl = F),
                                 x_ready4show_correspondences = ready4show::ready4show_correspondences(),
                                 X_Ready4useRepos = ready4use::Ready4useRepos()){
-  type_1L_chr <- match.arg(type_1L_chr)
+ # type_1L_chr <- match.arg(type_1L_chr)
   ## SEED
   # if(is.null(seed_df)){
   #   seed_df <- get_currency_tbls(type_1L_chr = type_1L_chr,
@@ -725,34 +786,34 @@ make_currencies_dss <- function(case_when_false_1L_chr = NA_character_,
   #                                                                  standards_df = standards_df,
   #                                                                  standards_var_nms_chr = standards_var_nms_chr)
   # }
-  ## COMPARISONS
+  ## Lookup
   currencies_df <- update_with_standards(seed_df,
                                          x_ready4show_correspondences = x_ready4show_correspondences,
                                          case_when_false_1L_chr = case_when_false_1L_chr,
                                          case_when_true_1L_chr = case_when_true_1L_chr,
                                          case_when_true_ls = case_when_true_ls,
                                          case_when_var_1L_chr = case_when_var_1L_chr,
-                                         reference_var_nm_1L_chr = country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
+                                         reference_var_nm_1L_chr = reference_var_nm_1L_chr,#country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
                                          filter_cdn_1L_chr = filter_cdn_1L_chr,
                                          force_standard_1L_lgl = force_standard_1L_lgl,
                                          fuzzy_logic_1L_chr = character(0), #fuzzy_logic_1L_chr,
                                          max_distance_1L_dbl = max_distance_1L_dbl,
                                          tf_false_val_1L_lgl = tf_false_val_1L_lgl)
-  ## VALIDATED
+  ## Validation
   validation_ls <- make_validation_ls(standards_df %>% dplyr::pull(standards_var_nms_chr[1]),
                                       ds_df = currencies_df,
-                                      var_nm_1L_chr = country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
+                                      var_nm_1L_chr = reference_var_nm_1L_chr,#country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
                                       sort_1L_lgl = sort_1L_lgl)
   # First pass - validate countries [vector or list]
   # Second pass - validate currency codes ISOcodes::ISO_4217$Letter
   # Third pass - validate currecy names
   validationTWO_ls <- make_validation_ls(standards_df %>% dplyr::pull(standards_var_nms_chr[1]),
                                          ds_df = currencies_df,
-                                         var_nm_1L_chr = country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
+                                         var_nm_1L_chr = reference_var_nm_1L_chr,#country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
                                          sort_1L_lgl = sort_1L_lgl)
 
-  currencies_dss_ls <- make_standardised_dss(c("Currencies_By_Country","Currency_Country_Groups")[which(c("Country","Currency")==type_1L_chr)],
-                                             comparisons_df = currencies_df,
+  currencies_dss_ls <- make_standardised_dss(x@prefix_1L_chr,#c("Currencies_By_Country","Currency_Country_Groups")[which(c("Country","Currency")==type_1L_chr)],
+                                             lookup_df = currencies_df,
                                              seed_df = seed_df,
                                              standards_df = standards_df,
                                              validation_ls = validation_ls,
@@ -760,34 +821,14 @@ make_currencies_dss <- function(case_when_false_1L_chr = NA_character_,
                                              what_chr = what_chr)
   return(currencies_dss_ls)
 }
-update_currency_default_ls <- function(default_ls,
-                                       force_standard_1L_lgl = F,
-                                       what_1L_chr = c("all", "arguments", "correspondences", "logic", "seed", "reference")){
-  what_1L_chr <- match.arg(what_1L_chr)
-  type_1L_chr <- "currency"
-  default_ls$seed_df <- get_seed_curencies()
-  default_ls$seed_var_nms_chr <- get_seed_curencies(T)
-  correspondences_chr <- c(Abkhazia = "Abkhazia", `Akrotiri and Dhekelia` = "Akrotiri and Dhekelia",
-                           Artsakh = "Artsakh", `Saint Helena, Ascension and Tristan da Cunha` = "Ascension Island", Congo = "Congo, Republic of the",
-                           Guernsey = "Bailiwick of Guernsey", `Timor-Leste` = "East Timor", `Korea, Democratic People's Republic of` = "Korea, North", Kosovo = "Kosovo", `Northern Cyprus`= "Northern Cyprus", `Bonaire, Sint Eustatius and Saba` = "Saba",
-                           `Western Sahara` = "Sahrawi Republic[I]", `Somaliland` = "Somaliland", `South Ossetia` = "South Ossetia", Transnistria = "Transnistria", `Holy See (Vatican City State)`= "Vatican City")
-  default_ls$x_ready4show_correspondences <- ready4show::renew.ready4show_correspondences(ready4show::ready4show_correspondences(),
-                                                                                          old_nms_chr = unname(correspondences_chr),
-                                                                                          new_nms_chr = names(correspondences_chr))
-  default_ls$x_ready4show_correspondences <- update_correspondences(x_ready4show_correspondences = default_ls$x_ready4show_correspondences,
-                                                                            seed_df = get_seed_cities(),
-                                                                            reference_var_nm_1L_chr = default_ls$seed_var_nms_chr,
-                                                                            force_standard_1L_lgl = force_standard_1L_lgl,
-                                                                            fuzzy_logic_1L_chr = "jw",
-                                                                            max_distance_1L_dbl = Inf,
-                                                                            standards_df = get_country_standards(),
-                                                                            standards_var_nms_chr = get_country_standards(T))
-  default_ls$fuzzy_logic_1L_chr <- character(0)
-  return(default_ls)
-}
-x <- CostlyCountryCorrespondences()
+
+#library(ready4)
+x <- CostlyCountries()
 x <- renew(x, type_1L_chr = "default")
-dss_ls <- manufacture(x)
+counry_dss_ls <- manufacture(x, what_1L_chr = "datasets")
+y <- CostlyCurrencies()
+y <- renew(y, type_1L_chr = "default")
+currency_dss_ls <- manufacture(y, what_1L_chr = "datasets")
 # update_currency_tbls <- function(currency_tbls_ls,
 #                                  country_var_nms_chr = c("State or territory[1]","Countries/ territories"),
 #                                  type_1L_chr = c("Both","Country","Currency"),
