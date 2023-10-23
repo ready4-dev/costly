@@ -3,7 +3,7 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   costly: costly.html
-last_built: 2023-10-23T04:52Z
+last_built: 2023-10-23T06:21Z
 urls:
   reference: https://ready4-dev.github.io/costly/reference
   article: https://ready4-dev.github.io/costly/articles
