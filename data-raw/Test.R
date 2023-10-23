@@ -381,11 +381,11 @@ make_ds_names <- function(label_1L_chr = "Standardised",
   return(names_chr)
 }
 make_standardised_dss <- function(label_1L_chr = "Country",
-
-                                  lookup_df = data.frame(),
-
-                                  seed_df = data.frame(),
-                                  standards_df = data.frame(),
+                                  lookup_Ready4useDyad = ready4use::Ready4useDyad(),
+                                  seed_Ready4useDyad = ready4use::Ready4useDyad(),
+                                  standards_Ready4useDyad = ready4use::Ready4useDyad(),
+                                  # seed_df = data.frame(),
+                                  # standards_df = data.frame(),
                                   type_chr = c("Input", "Output"),
                                   validation_ls = list(),
                                  # x_ready4show_correspondences = ready4show::ready4show_correspondences(),
@@ -395,7 +395,7 @@ make_standardised_dss <- function(label_1L_chr = "Country",
   testit::assert("label_1L_chr needs to be a length one character vector", length(label_1L_chr)==1 && is.character(label_1L_chr))
   type_chr <- match.arg(type_chr, several.ok = T) %>% sort()
   what_chr <- match.arg(what_chr, several.ok = T) %>% sort()
-  standardised_dss_ls <- list(x_ready4show_correspondences, seed_df, standards_df, y_ready4show_correspondences, lookup_df, validation_ls) %>% stats::setNames(make_ds_names(label_1L_chr))
+  standardised_dss_ls <- list(x_ready4show_correspondences, seed_Ready4useDyad, standards_Ready4useDyad, y_ready4show_correspondences, lookup_Ready4useDyad, validation_ls) %>% stats::setNames(make_ds_names(label_1L_chr))
   standardised_dss_ls <- standardised_dss_ls[make_ds_names(label_1L_chr, type_chr = type_chr, what_chr = what_chr)]
   return(standardised_dss_ls)
 }
@@ -605,7 +605,9 @@ update_country_default_ls <- function(default_ls,
   default_ls$x_ready4show_correspondences <- make_country_correspondences("cities")
   default_ls$x_ready4show_correspondences <- update_correspondences(x_ready4show_correspondences = default_ls$x_ready4show_correspondences,
                                                                     seed_df = default_ls$CostlySeed_r4@Ready4useDyad_r4@ds_tb %>% as.data.frame(),#default_ls$seed_df,
-                                                                    reference_var_nm_1L_chr = procure(default_ls$CostlySeed_r4, matches_chr = default_ls$CostlySeed_r4@include_chr[1], what_1L_chr = "names"),#default_ls$seed_var_nms_chr[1],
+                                                                    reference_var_nm_1L_chr = procure(default_ls$CostlySeed_r4,
+                                                                                                      matches_chr = default_ls$CostlySeed_r4@include_chr[1], ## REPLACE
+                                                                                                      what_1L_chr = "names"),#default_ls$seed_var_nms_chr[1],
                                                                     force_standard_1L_lgl = force_standard_1L_lgl,
                                                                     fuzzy_logic_1L_chr = "jw",
                                                                     max_distance_1L_dbl = Inf,
@@ -730,7 +732,8 @@ CostlyCorrespondences <- methods::setClass("CostlyCorrespondences",
                                                     args_ls = "list",
                                                     force_standard_1L_lgl = "logical",
                                                     fuzzy_logic_1L_chr = "character",
-                                                    max_distance_1L_dbl = "numeric"#,standards_ls = "list"
+                                                    max_distance_1L_dbl = "numeric",
+                                                    results_ls = "list"
                                                     ),
                                           prototype =  list(CostlySeed_r4 = CostlySeed(),
                                                             CostlyStandards_r4 = CostlyStandards(),
@@ -738,7 +741,8 @@ CostlyCorrespondences <- methods::setClass("CostlyCorrespondences",
                                                             args_ls = list(),
                                                             force_standard_1L_lgl = F,
                                                             fuzzy_logic_1L_chr = character(0),
-                                                            max_distance_1L_dbl = Inf#,standards_ls = make_standards_xx()
+                                                            max_distance_1L_dbl = Inf,
+                                                            results_ls = list()#make_standards_xx()
                                                             ))
 CostlyCountries <- methods::setClass("CostlyCountries",
                                      contains = "CostlyCorrespondences",
@@ -758,51 +762,88 @@ CostlyCurrencies <- methods::setClass("CostlyCurrencies",
 
 ## Methods
 methods::setMethod("manufacture", "CostlyCorrespondences", function(x,
-                                                                    #force_standard_1L_lgl = F,
-                                                                    #matches_chr = character(0),
-                                                                    new_val_xx = "identity",#NULL,
-                                                                    #label_1L_chr = "Standardised",
+                                                                    #new_val_xx = "identity",#NULL,
+                                                                    seed_matches_chr = c("Standardised","A3"),
+                                                                    standards_matches_chr = c("Standardised","A3"),
                                                                     sort_1L_lgl = T,
                                                                     type_chr = make_ds_names(type_chr = character(0)),
-                                                                    what_1L_chr = c("datasets", "defaults", "shorthand")
+                                                                    what_1L_chr = c("dataset",
+                                                                                    "defaults", "shorthand"),
+                                                                    ...
                                                                     ){
   what_1L_chr <- match.arg(what_1L_chr)
-  if(what_1L_chr %in% c("datasets", "defaults", "shorthand")){
-    if(what_1L_chr == "datasets"){
-      if(!identical(new_val_xx, "identity") && !is.null(new_val_xx)){
-        x_ready4show_correspondences <- new_val_xx
-      }else{
-        x_ready4show_correspondences <- x@correspondences_r3
-      }
-      x <- renew(x, new_val_xx = new_val_xx, type_1L_chr = "final", what_1L_chr = "correspondences") # Better to do this step outside fn call
-      y_ready4show_correspondences <- x@correspondences_r3
+  if(what_1L_chr %in% c("dataset",
+                        "defaults", "shorthand")){
+    if(what_1L_chr == "dataset"){
+      # if(!identical(new_val_xx, "identity") && !is.null(new_val_xx)){
+      #   x_ready4show_correspondences <- new_val_xx
+      # }else{
+      #   x_ready4show_correspondences <- x@correspondences_r3
+      # }
+      # x <- renew(x, new_val_xx = new_val_xx, type_1L_chr = "final", what_1L_chr = "correspondences") # Better to do this step outside fn call
+      # y_ready4show_correspondences <- x@correspondences_r3
       #}
-      ds_df <- update_with_standards(x@CostlySeed_r4@Ready4useDyad_r4@ds_tb %>% as.data.frame(),#x@seed_df,
-                                     x_ready4show_correspondences = x@correspondences_r3,
-                                     case_when_false_1L_chr = x@args_ls$case_when_false_1L_chr,
-                                     case_when_true_1L_chr = x@args_ls$case_when_true_1L_chr,
-                                     case_when_true_ls = x@args_ls$case_when_true_ls,
-                                     case_when_var_1L_chr = x@args_ls$case_when_var_1L_chr,
-                                     reference_var_nm_1L_chr = procure(x@CostlySeed_r4, matches_chr = x@CostlySeed_r4@include_chr[1], what_1L_chr = "names"),#x@seed_var_nms_chr[1],
-                                     filter_cdn_1L_chr = x@args_ls$filter_cdn_1L_chr,
-                                     force_standard_1L_lgl = x@force_standard_1L_lgl,
-                                     fuzzy_logic_1L_chr = x@fuzzy_logic_1L_chr,
-                                     max_distance_1L_dbl = x@max_distance_1L_dbl,
-                                     standards_df = x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb,#x@standards_df,
-                                     standards_var_nms_chr = procure(x@CostlyStandards_r4, matches_chr = x@CostlyStandards_r4@include_chr, what_1L_chr = "names"),#get_corresponding_var(x@standards_ls[[1]]@Ready4useDyad_r4, x@standards_ls[[1]]@include_chr, what_1L_chr = "names"),#x@standards_var_nms_chr,
-                                     tf_false_val_1L_lgl = x@args_ls$tf_false_val_1L_lgl)
-      validation_ls <- make_validation_ls(x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb %>% dplyr::pull(procure(x@CostlyStandards_r4, matches_chr = x@CostlySeed_r4@label_1L_chr, what_1L_chr = "names")),#x@standards_var_nms_chr[1]
-                                          ds_df = ds_df,
-                                          var_nm_1L_chr = procure(x@CostlySeed_r4, matches_chr = x@CostlySeed_r4@include_chr[1], what_1L_chr = "names"),#x@seed_var_nms_chr[1],
-                                          sort_1L_lgl = sort_1L_lgl)
-      object_xx <- make_standardised_dss(x@CostlySeed_r4@label_1L_chr,
-                                         lookup_df = ds_df,
-                                         seed_df = x@CostlySeed_r4@Ready4useDyad_r4@ds_tb %>% as.data.frame(),
-                                         standards_df = x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb,
-                                         validation_ls = validation_ls,
-                                         what_chr = type_chr,
-                                         x_ready4show_correspondences = x_ready4show_correspondences,
-                                         y_ready4show_correspondences = y_ready4show_correspondences)
+      if(type_chr[1] == "Correspondences"){
+        object_xx <- update_with_standards(x@CostlySeed_r4@Ready4useDyad_r4@ds_tb %>% as.data.frame(),#x@seed_df,
+                                           x_ready4show_correspondences = x@correspondences_r3,
+                                           case_when_false_1L_chr = x@args_ls$case_when_false_1L_chr,
+                                           case_when_true_1L_chr = x@args_ls$case_when_true_1L_chr,
+                                           case_when_true_ls = x@args_ls$case_when_true_ls,
+                                           case_when_var_1L_chr = x@args_ls$case_when_var_1L_chr,
+                                           reference_var_nm_1L_chr = procure(x@CostlySeed_r4,
+                                                                             matches_chr = x@CostlySeed_r4@include_chr[1], ## REPLACE
+                                                                             what_1L_chr = "names"),#x@seed_var_nms_chr[1],
+                                           filter_cdn_1L_chr = x@args_ls$filter_cdn_1L_chr,
+                                           force_standard_1L_lgl = x@force_standard_1L_lgl,
+                                           fuzzy_logic_1L_chr = x@fuzzy_logic_1L_chr,
+                                           max_distance_1L_dbl = x@max_distance_1L_dbl,
+                                           standards_df = x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb,#x@standards_df,
+                                           standards_var_nms_chr = procure(x@CostlyStandards_r4, matches_chr = x@CostlyStandards_r4@include_chr, what_1L_chr = "names"),
+                                           tf_false_val_1L_lgl = x@args_ls$tf_false_val_1L_lgl)
+      }
+      if(type_chr[1] == "Lookup"){
+        testit::assert("Seed matches need to be included in the 'var_ctg_chr' column of the seed dictionary.",
+                       identical(setdiff(seed_matches_chr, x@CostlySeed_r4@Ready4useDyad_r4@dictionary_r3$var_ctg_chr), character(0)))
+        testit::assert("Standards matches values need to be included in the 'var_ctg_chr' column of the standards dictionary.",
+                       identical(setdiff(standards_matches_chr, x@CostlyStandards_r4@Ready4useDyad_r4@dictionary_r3$var_ctg_chr), character(0)))
+        standard_concepts_chr <- x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb %>% #x@standards_ls[[x@CostlySeed_r4@label_1L_chr]]$standards_df
+          dplyr::pull(!!rlang::sym(procure(x@CostlyStandards_r4, matches_chr = standards_matches_chr[1]) #$standards_var_nms_chr[2]
+          ))
+        standard_codes_chr <- x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb %>% #x@standards_ls[[x@CostlySeed_r4@label_1L_chr]]$standards_df
+          dplyr::pull(!!rlang::sym(procure(x@CostlyStandards_r4, matches_chr = standards_matches_chr[2]) #$standards_var_nms_chr[2]
+          ))
+        ds_df <- as.data.frame(x@CostlySeed_r4@Ready4useDyad_r4@ds_tb)
+        ds_df <- ds_df %>%
+          dplyr::mutate(!!rlang::sym(procure(x@CostlySeed_r4, seed_matches_chr[1])) := !!rlang::sym(procure(x@CostlySeed_r4, seed_matches_chr[1])##x@seed_var_nms_chr[2] x@seed_var_nms_chr[4]
+          ) %>% purrr::map2_chr(!!rlang::sym(procure(x@CostlySeed_r4, seed_matches_chr[2])),
+                                ~ {
+                                  ifelse(.x %in% (standard_concepts_chr),
+                                         .x,
+                                         ifelse(.y %in% (standard_codes_chr),
+                                                ready4::get_from_lup_obj(x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb,#standards_ls[[2]]$standards_df,
+                                                                         match_var_nm_1L_chr = procure(x@CostlyStandards_r4, matches_chr = standards_matches_chr[2]),#standards_ls[[2]]$standards_var_nms_chr[2],
+                                                                         match_value_xx = .y,
+                                                                         target_var_nm_1L_chr = procure(x@CostlyStandards_r4, matches_chr = standards_matches_chr[1])),
+                                                ifelse(x@force_standard_1L_lgl, NA_character_, .x))#standards_ls[[2]]$standards_var_nms_chr[1]),
+
+                                  )}))
+        if(x@force_standard_1L_lgl){
+          ds_df <- dplyr::filter(ds_df, !!rlang::sym(procure(x@CostlySeed_r4, seed_matches_chr[1])) %>% purrr::map_lgl(~!is.na(.x)))
+        }
+        object_xx <- ds_df
+      }
+      # validation_ls <- make_validation_ls(x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb %>% dplyr::pull(procure(x@CostlyStandards_r4, matches_chr = x@CostlySeed_r4@label_1L_chr, what_1L_chr = "names")),#x@standards_var_nms_chr[1]
+      #                                     ds_df = ds_df,
+      #                                     var_nm_1L_chr = procure(x@CostlySeed_r4, matches_chr = x@CostlySeed_r4@include_chr[1], what_1L_chr = "names"),#x@seed_var_nms_chr[1],
+      #                                     sort_1L_lgl = sort_1L_lgl)
+      # object_xx <- make_standardised_dss(x@CostlySeed_r4@label_1L_chr,
+      #                                    lookup_df = ds_df,
+      #                                    seed_df = x@CostlySeed_r4@Ready4useDyad_r4@ds_tb %>% as.data.frame(),
+      #                                    standards_df = x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb,
+      #                                    validation_ls = validation_ls,
+      #                                    what_chr = type_chr,
+      #                                    x_ready4show_correspondences = x_ready4show_correspondences,
+      #                                    y_ready4show_correspondences = y_ready4show_correspondences)
     }
     if(what_1L_chr == "defaults"){
       object_xx <- make_defaults(label_1L_chr = x@CostlySeed_r4@label_1L_chr,force_standard_1L_lgl = x@force_standard_1L_lgl, what_1L_chr = "all") #x@label_1L_chr %>% tolower(),#"country",
@@ -810,7 +851,7 @@ methods::setMethod("manufacture", "CostlyCorrespondences", function(x,
     if(what_1L_chr == "shorthand"){
       object_xx <- ready4show::ready4show_correspondences() %>% ready4show::renew.ready4show_correspondences(old_nms_chr = c("seed", "standards",
                                                                                                                              "correspondences", "arguments", "force", "logic", "distance",  # "variables",
-                                                                                                                             "sharing"),
+                                                                                                                             "results", "sharing"),
                                                                                                 new_nms_chr = methods::slotNames(x))
     }
   }else{
@@ -818,30 +859,42 @@ methods::setMethod("manufacture", "CostlyCorrespondences", function(x,
   }
   return(object_xx)
 })
-methods::setMethod("manufacture", "CostlyCountries", function(x, # To write
-                                                              #force_standard_1L_lgl = F,
-                                                              new_val_xx = NULL,
+methods::setMethod("manufacture", "CostlyCountries", function(x,
+                                                              seed_matches_chr = c("Country","A3"),
                                                               sort_1L_lgl = T,
+                                                              standards_matches_chr = c("Country","A3"),
                                                               type_chr = make_ds_names(type_chr = character(0)),
-                                                              what_1L_chr = c("datasets", "defaults", "shorthand")){
+                                                              what_1L_chr = c("dataset", "defaults", "shorthand"),
+                                                              ...){
+  if(what_1L_chr %in% c("dataset", "defaults")){
   if(what_1L_chr == "defaults"){
-    object_xx <- NULL
+    #object_xx <- NULL
     object_xx <- methods::callNextMethod()
     object_xx <- update_country_default_ls(object_xx, force_standard_1L_lgl = x@force_standard_1L_lgl)
+  }
+    if(what_1L_chr == "dataset"){
+      object_xx <- methods::callNextMethod(x = x, type_chr = type_chr, seed_matches_chr = seed_matches_chr, sort_1L_lgl = sort_1L_lgl, standards_matches_chr = standards_matches_chr, what_1L_chr = what_1L_chr, ... = ...)
+    }
   }else{
     object_xx <- methods::callNextMethod()
   }
   return(object_xx)
 })
-methods::setMethod("manufacture", "CostlyCurrencies", function(x, # To write
-                                                               #force_standard_1L_lgl = F,
-                                                               new_val_xx = NULL,
+methods::setMethod("manufacture", "CostlyCurrencies", function(x,
+                                                               seed_matches_chr = c("Currency","A3"),
                                                                sort_1L_lgl = T,
+                                                               standards_matches_chr = c("Currency","A3"),
                                                                type_chr = make_ds_names(type_chr = character(0)),
-                                                               what_1L_chr = c("datasets", "defaults", "shorthand")){
-  if(what_1L_chr == "defaults"){
-    object_xx <- methods::callNextMethod()
-    object_xx <- update_currency_default_ls(object_xx, force_standard_1L_lgl = x@force_standard_1L_lgl)
+                                                               what_1L_chr = c("dataset", "defaults", "shorthand"),
+                                                               ...){
+  if(what_1L_chr %in% c("dataset", "defaults")){
+    if(what_1L_chr == "defaults"){
+      object_xx <- methods::callNextMethod()
+      object_xx <- update_currency_default_ls(object_xx, force_standard_1L_lgl = x@force_standard_1L_lgl)
+    }
+    if(what_1L_chr == "dataset"){
+      object_xx <- methods::callNextMethod(x = x, type_chr = type_chr, seed_matches_chr = seed_matches_chr, sort_1L_lgl = sort_1L_lgl, standards_matches_chr = standards_matches_chr, what_1L_chr = what_1L_chr, ... = ...)
+    }
   }else{
     object_xx <- methods::callNextMethod()
   }
@@ -867,20 +920,39 @@ methods::setMethod("procure", "CostlySource", function(x,
   }
   return(object_xx)
 })
-# methods::setMethod("ratify", "CostlyCorrespondences", # make method of CostlyCorrespondences
-#                    function (x, what_1L_chr = "correspondences", ...) {
-#                      # if(what_1L_chr == "correspondences"){
-#                      #   x@correspondences_r3 <- update_correspondences(x_ready4show_correspondences = x@correspondences_r3,
-#                      #                                                  standards_df = x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb %>% as.data.frame(),
-#                      #                                                  standards_var_nms_chr = procure(x@CostlyStandards_r4, matches_chr = x@CostlyStandards_r4@include_chr, what_1L_chr = "names"),
-#                      #                                                  seed_df = x@CostlySeed_r4@Ready4useDyad_r4@ds_tb %>% as.data.frame(),# x@seed_df,
-#                      #                                                  reference_var_nm_1L_chr = procure(x@CostlySeed_r4, matches_chr = x@CostlySeed_r4@include_chr, what_1L_chr = "names"),
-#                      #                                                  force_standard_1L_lgl = x@force_standard_1L_lgl,
-#                      #                                                  fuzzy_logic_1L_chr = x@fuzzy_logic_1L_chr,
-#                      #                                                  max_distance_1L_dbl = x@max_distance_1L_dbl)
-#                      # }
-#                      return(x)
-#                    })
+methods::setMethod("ratify", "CostlyCorrespondences", function(x,
+                                                               new_val_xx = "identity",
+                                                               sort_1L_lgl = T,
+                                                               type_1L_chr = make_ds_names(type_chr = character(0))[1:2],
+                                                               what_chr = make_ds_names(type_chr = character(0))){
+  type_1L_chr <- match.arg(type_1L_chr)
+  if(type_1L_chr == "Correspondences"){
+    if(!identical(new_val_xx, "identity") && !is.null(new_val_xx)){
+      x_ready4show_correspondences <- new_val_xx
+    }else{
+      x_ready4show_correspondences <- x@correspondences_r3
+    }
+    x <- renew(x, new_val_xx = new_val_xx, type_1L_chr = "final", what_1L_chr = "correspondences")
+    match_1L_chr <- x@CostlySeed_r4@include_chr[1] ## REPLACE
+  }else{
+    match_1L_chr <- x@CostlySeed_r4@label_1L_chr
+    x_ready4show_correspondences <- x@correspondences_r3
+  }
+  ds_df <- manufacture(x, type_chr = type_1L_chr, what_1L_chr = "dataset")
+  validation_ls <- make_validation_ls(x@CostlyStandards_r4@Ready4useDyad_r4@ds_tb %>% dplyr::pull(procure(x@CostlyStandards_r4, matches_chr = x@CostlySeed_r4@label_1L_chr, what_1L_chr = "names")),
+                                      ds_df = ds_df,
+                                      var_nm_1L_chr = procure(x@CostlySeed_r4, matches_chr = match_1L_chr, what_1L_chr = "names"),
+                                      sort_1L_lgl = sort_1L_lgl)
+  x@results_ls <- make_standardised_dss(x@CostlySeed_r4@label_1L_chr,
+                                        lookup_Ready4useDyad = ready4use::Ready4useDyad(ds_tb = tibble::as_data_frame(ds_df), dictionary_r3 = x@CostlySeed_r4@Ready4useDyad_r4@dictionary_r3),
+                                        seed_Ready4useDyad = x@CostlySeed_r4@Ready4useDyad_r4,
+                                        standards_Ready4useDyad = x@CostlyStandards_r4@Ready4useDyad_r4,
+                                        validation_ls = validation_ls,
+                                        what_chr = what_chr,
+                                        x_ready4show_correspondences = x_ready4show_correspondences,
+                                        y_ready4show_correspondences = x@correspondences_r3)
+  return(x)
+})
 methods::setMethod("renew", "CostlyCorrespondences", # make method of CostlyCorrespondences
                    function (x, new_val_xx = NULL, type_1L_chr = "slot", what_1L_chr = "correspondences", ...) {
                      if(type_1L_chr == "default"){
@@ -950,7 +1022,7 @@ make_currencies_dss <- function(case_when_false_1L_chr = NA_character_,
   #
   x <- CostlyCountries()
   x <- renew(x,
-             new_val_xx = add_default_currency_seed(x@CostlySeed_r4, include_1L_chr = "Country"),
+             new_val_xx = add_default_currency_seed(x@CostlySeed_r4, include_1L_chr = "Country"), # add to renew method
              what_1L_chr = "seed")
   # Exploratory Logic
   # results_ls <- manufacture(x, what_1L_chr = "datasets")
@@ -961,41 +1033,36 @@ make_currencies_dss <- function(case_when_false_1L_chr = NA_character_,
   # Could add args_ls logic
   # results_ls <- manufacture(renew(x, new_val_xx = T, what_1L_chr = "force"), new_val_xx = make_country_correspondences("currencies"), what_1L_chr = "datasets")
   # manufacture(x, new_val_xx = NULL, what_1L_chr = "datasets")
-  x <- renew(x, new_val_xx = make_country_correspondences("currencies"), type_1L_chr = "final", what_1L_chr = "correspondences")
-  results_ls <- manufacture(x, what_1L_chr = "datasets")
+  x <- renew(x, new_val_xx = make_country_correspondences("currencies"), # add to renew method
+             type_1L_chr = "final", what_1L_chr = "correspondences")
+  x <- ratify(x)
   y <- CostlyCurrencies()
   y <- renew(y, new_val_xx = add_default_currency_seed(y@CostlySeed_r4,
-                                                       Ready4useDyad_r4 =ready4use::Ready4useDyad(ds_tb = results_ls$Country_Input_Seed %>% tibble::as_tibble(),
-                                                                                                  dictionary_r3 = x@CostlySeed_r4@Ready4useDyad_r4@dictionary_r3)),
+                                                       Ready4useDyad_r4 = x@results_ls$Country_Output_Lookup), #x@results_ls$Country_Input_Seed
              what_1L_chr = "seed")
- standard_currencies_chr <- y@CostlyStandards_r4@Ready4useDyad_r4@ds_tb %>% #x@standards_ls[[x@CostlySeed_r4@label_1L_chr]]$standards_df
-   dplyr::pull(!!rlang::sym(procure(y@CostlyStandards_r4, matches_chr = "Currency") #$standards_var_nms_chr[2]
-   ))
- ds_df <- as.data.frame(y@CostlySeed_r4@Ready4useDyad_r4@ds_tb)
-  ds_df <- ds_df %>%
-    dplyr::mutate(!!rlang::sym(procure(y@CostlySeed_r4, "Currency")) := !!rlang::sym(procure(y@CostlySeed_r4, "Currency")##x@seed_var_nms_chr[2] x@seed_var_nms_chr[4]
-                                                 ) %>% purrr::map_chr(~ {
-      ifelse(.x %in% (standard_currencies_chr),
-             ready4::get_from_lup_obj(y@CostlyStandards_r4@Ready4useDyad_r4@ds_tb,#standards_ls[[2]]$standards_df,
-                                       match_var_nm_1L_chr = procure(y@CostlyStandards_r4, matches_chr = "A3"),#standards_ls[[2]]$standards_var_nms_chr[2],
-                                       match_value_xx = .x,
-                                       target_var_nm_1L_chr = procure(y@CostlyStandards_r4, matches_chr = "Currency")),#standards_ls[[2]]$standards_var_nms_chr[1]),
-             ifelse(y@force_standard_1L_lgl, NA_character_, .x)
-             )}))
-  if(y@force_standard_1L_lgl){
-    ds_df <- dplyr::filter(ds_df, !!rlang::sym(procure(y@CostlySeed_r4, "Currency")) %>% purrr::map_lgl(~!is.na(.x)))
-  }
-  validationTWO_ls <- make_validation_ls(standard_currencies_chr,
-                                         ds_df = ds_df,
-                                         var_nm_1L_chr = procure(y@CostlySeed_r4, "Currency"),#reference_var_nm_1L_chr,#x@seed_var_nms_chr[1]#country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
-                                         sort_1L_lgl = sort_1L_lgl)
-  if(sort_1L_lgl){
-    ds_df <- ds_df %>% dplyr::arrange(!!rlang::sym(x@seed_var_nms_chr[1]))
-  }
+  y <- ratify(y, type_1L_chr = "Lookup")
+  # manufacture(y, seed_matches_chr = c("Currency","A3"), standards_matches_chr = c("Currency","A3"),
+  #             type_chr = "Lookup", what_1L_chr = "dataset")
+  # ready4use::Ready4useDyad(ds_tb = x@results_ls$Country_Input_Seed %>% tibble::as_tibble(),
+  #                          dictionary_r3 = x@CostlySeed_r4@Ready4useDyad_r4@dictionary_r3)
+ # y@force_standard_1L_lgl <- T
+  # standards_matches_chr <- c("Currency","A3")
+  #
+  # results_two_ls <- manufacture(y, what_1L_chr = "datasets")
+
+  # validationTWO_ls <- make_validation_ls(standard_currencies_chr,
+  #                                        ds_df = ds_df,
+  #                                        var_nm_1L_chr = procure(y@CostlySeed_r4, "Currency"),#reference_var_nm_1L_chr,#x@seed_var_nms_chr[1]#country_var_nms_chr[which(c("Country","Currency")==type_1L_chr)],
+  #                                        sort_1L_lgl = sort_1L_lgl)
+  # if(sort_1L_lgl){
+  #   ds_df <- ds_df %>% dplyr::arrange(!!rlang::sym(x@seed_var_nms_chr[1]))
+  # }
   currencies_dss_ls <- make_standardised_dss(x@label_1L_chr,#c("Currencies_By_Country","Currency_Country_Groups")[which(c("Country","Currency")==type_1L_chr)],
                                              lookup_df = ds_df,
-                                             seed_df = seed_df,
-                                             standards_df = standards_df,
+                                             # seed_Ready4useDyad = x@CostlySeed_r4@Ready4useDyad_r4,
+                                             # standards_Ready4useDyad = x@CostlyStandards_r4@Ready4useDyad_r4,
+                                             # seed_df = seed_df,
+                                             # standards_df = standards_df,
                                              validation_ls = validation_ls,
                                              x_ready4show_correspondences = x_ready4show_correspondences,
                                              #type_chr = ?,
@@ -1006,6 +1073,7 @@ make_currencies_dss <- function(case_when_false_1L_chr = NA_character_,
 #library(ready4)
 # x <- CostlyCountries()
 # x <- renew(x, type_1L_chr = "default")
+# x <- ratify(x)
 # country_dss_ls <- manufacture(x, what_1L_chr = "datasets")
 # y <- CostlyCurrencies()
 # y <- renew(y, type_1L_chr = "default")
