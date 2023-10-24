@@ -22,18 +22,105 @@
     <loc>https://ready4-dev.github.io/costly/index.html</loc>
   </url>
   <url>
+    <loc>https://ready4-dev.github.io/costly/reference/CostlySource-class.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/add_default_country_seed.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/add_default_currency_seed.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/add_source_label.html</loc>
+  </url>
+  <url>
     <loc>https://ready4-dev.github.io/costly/reference/costly-package.html</loc>
   </url>
   <url>
     <loc>https://ready4-dev.github.io/costly/reference/deprecated.html</loc>
   </url>
   <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_corresponding_var.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_country_standards.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_currency.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_currency_standards.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_currency_tbls.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_seed_cities.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_seed_currencies.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_seed_ds.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/get_standardised_dss.html</loc>
+  </url>
+  <url>
     <loc>https://ready4-dev.github.io/costly/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://ready4-dev.github.io/costly/reference/make_survey.html</loc>
+    <loc>https://ready4-dev.github.io/costly/reference/make_country_correspondences.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_country_standards.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_currency_ls.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_currency_standards.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_defaults.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_ds_names.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_standardised_dss.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_standards_xx.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_validation_ls.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/make_validation_output.html</loc>
   </url>
   <url>
     <loc>https://ready4-dev.github.io/costly/reference/pipe.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/transform_country.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/update_correspondences.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/update_country_default_ls.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/update_currency_correspondences.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/update_currency_default_ls.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/update_module_slot.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/update_with_standards.html</loc>
   </url>
 </urlset>
