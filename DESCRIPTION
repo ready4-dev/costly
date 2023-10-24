@@ -1,7 +1,7 @@
 Package: costly
 Title: Develop, Use and Share Unit Cost Datasets for Health Economic
     Analysis
-Version: 0.0.0.9003
+Version: 0.0.0.9004
 Authors@R: c(
     person("Matthew", "Hamilton", , "matthew.hamilton1@monash.edu", role = c("aut", "cre", "fnd"),
            comment = c(ORCID = "0000-0001-7407-9194")),
@@ -21,12 +21,44 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports: 
+    countrycode,
+    dplyr,
+    Hmisc,
     knitr,
     lifecycle,
     magrittr,
     methods,
-    testthat
+    purrr,
+    ready4 (>= 0.0.0.9125),
+    ready4show (>= 0.0.0.9111),
+    ready4use (>= 0.0.0.9231),
+    rlang,
+    rvest,
+    stats,
+    stringdist,
+    testit,
+    testthat,
+    tibble,
+    tidyselect,
+    utils
 VignetteBuilder: knitr
+Collate: 
+    'C4_CostlySource.R'
+    'C4_CostlySeed.R'
+    'C4_CostlyStandards.R'
+    'costly-package.R'
+    'fn_add.R'
+    'fn_get.R'
+    'fn_make.R'
+    'fn_transform.R'
+    'fn_update.R'
+    'imp_fns.R'
+    'imp_mthds.R'
+    'pkg_costly.R'
 Suggests: 
     knitrBootstrap,
     rmarkdown
+Remotes: 
+    ready4-dev/ready4,
+    ready4-dev/ready4show,
+    ready4-dev/ready4use
