@@ -1,7 +1,7 @@
 Package: costly
 Title: Develop, Use and Share Unit Cost Datasets for Health Economic
     Analysis
-Version: 0.0.0.9009
+Version: 0.0.0.9010
 Authors@R: c(
     person("Matthew", "Hamilton", , "matthew.hamilton1@monash.edu", role = c("aut", "cre", "fnd"),
            comment = c(ORCID = "0000-0001-7407-9194")),
@@ -57,6 +57,10 @@ Collate:
     'fn_update.R'
     'imp_fns.R'
     'imp_mthds.R'
+    'mthd_manufacture.R'
+    'mthd_procure.R'
+    'mthd_ratify.R'
+    'mthd_renew.R'
     'pkg_costly.R'
 Suggests: 
     knitrBootstrap,
