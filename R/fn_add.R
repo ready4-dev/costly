@@ -1,3 +1,57 @@
+#' Add country standards
+#' @description add_country_standards() is an Add function that updates an object by adding data to that object. Specifically, this function implements an algorithm to add country standards. Function argument Ready4useDyad_r4 specifies the object to be updated. The function returns A dataset and data dictionary pair. (a ready4 S4).
+#' @param Ready4useDyad_r4 A dataset and data dictionary pair. (a ready4 S4), Default: ready4use::Ready4useDyad()
+#' @param default_pkg_ds_chr Default package dataset (a character vector), Default: c("ISO_3166_1", "ISOcodes")
+#' @return A dataset and data dictionary pair. (a ready4 S4)
+#' @rdname add_country_standards
+#' @export 
+#' @importFrom ready4use Ready4useDyad renew.ready4use_dictionary
+#' @importFrom utils data
+#' @importFrom tibble as_tibble
+#' @importFrom purrr map_chr
+#' @keywords internal
+add_country_standards <- function (Ready4useDyad_r4 = ready4use::Ready4useDyad(), default_pkg_ds_chr = c("ISO_3166_1", 
+    "ISOcodes")) 
+{
+    utils::data(list = default_pkg_ds_chr[1], package = default_pkg_ds_chr[2], 
+        envir = environment())
+    Ready4useDyad_r4@ds_tb <- eval(parse(text = default_pkg_ds_chr[1])) %>% 
+        tibble::as_tibble()
+    Ready4useDyad_r4@dictionary_r3 <- ready4use::renew.ready4use_dictionary(Ready4useDyad_r4@dictionary_r3, 
+        var_nm_chr = names(Ready4useDyad_r4@ds_tb), var_ctg_chr = c("A2", 
+            "A3", "N", "Country", "Official", "Common"), var_desc_chr = c("Alpabetical country code (two letters)", 
+            "Alpabetical country code (three letters)", "Numeric country code", 
+            "Country name", "Country name (official)", "Country name (common alternative)"), 
+        var_type_chr = purrr::map_chr(Ready4useDyad_r4@ds_tb, 
+            ~class(.x)[1]) %>% unname())
+    return(Ready4useDyad_r4)
+}
+#' Add currency standards
+#' @description add_currency_standards() is an Add function that updates an object by adding data to that object. Specifically, this function implements an algorithm to add currency standards. Function argument Ready4useDyad_r4 specifies the object to be updated. The function returns A dataset and data dictionary pair. (a ready4 S4).
+#' @param Ready4useDyad_r4 A dataset and data dictionary pair. (a ready4 S4), Default: ready4use::Ready4useDyad()
+#' @param default_pkg_ds_chr Default package dataset (a character vector), Default: c("ISO_4217", "ISOcodes")
+#' @return A dataset and data dictionary pair. (a ready4 S4)
+#' @rdname add_currency_standards
+#' @export 
+#' @importFrom ready4use Ready4useDyad renew.ready4use_dictionary
+#' @importFrom utils data
+#' @importFrom tibble as_tibble
+#' @importFrom purrr map_chr
+#' @keywords internal
+add_currency_standards <- function (Ready4useDyad_r4 = ready4use::Ready4useDyad(), default_pkg_ds_chr = c("ISO_4217", 
+    "ISOcodes")) 
+{
+    utils::data(list = default_pkg_ds_chr[1], package = default_pkg_ds_chr[2], 
+        envir = environment())
+    Ready4useDyad_r4@ds_tb <- eval(parse(text = default_pkg_ds_chr[1])) %>% 
+        tibble::as_tibble()
+    Ready4useDyad_r4@dictionary_r3 <- ready4use::renew.ready4use_dictionary(Ready4useDyad_r4@dictionary_r3, 
+        var_nm_chr = names(Ready4useDyad_r4@ds_tb), var_ctg_chr = c("A3", 
+            "N", "Currency"), var_desc_chr = c("Alpabetical currency code (three letters)", 
+            "Numeric currency code", "Currency name"), var_type_chr = purrr::map_chr(Ready4useDyad_r4@ds_tb, 
+            ~class(.x)[1]) %>% unname())
+    return(Ready4useDyad_r4)
+}
 #' Add default country seed
 #' @description add_default_country_seed() is an Add function that updates an object by adding data to that object. Specifically, this function implements an algorithm to add default country seed. Function argument CostlySeed_r4 specifies the object to be updated. The function returns Original (non-standardised) dataset (and metadata). (a ready4 S4).
 #' @param CostlySeed_r4 Original (non-standardised) dataset (and metadata). (a ready4 S4), Default: CostlySeed()

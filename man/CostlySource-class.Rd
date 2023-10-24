@@ -15,7 +15,7 @@ Input dataset (and metadata) for generating standardised costing datasets.
 
 \item{\code{include_chr}}{Include (a character vector)}
 
-\item{\code{label_1L_chrs}}{(an instance of the character class)}
+\item{\code{label_1L_chr}}{Label (a character vector of length one)}
 
 \item{\code{match_1L_chr}}{Match (a character vector of length one)}
 

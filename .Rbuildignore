@@ -27,3 +27,5 @@
 ^data-raw/s4_fnsquarantine/procure\.R$
 ^data-raw/s4_fnsquarantine/ratify\.R$
 ^data-raw/s4_fnsquarantine/renew\.R$
+^doc$
+^Meta$

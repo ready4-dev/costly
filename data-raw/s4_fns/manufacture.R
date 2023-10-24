@@ -27,7 +27,7 @@ manufacture_CostlyCorrespondences <- function(x,
       }
       if(type_chr[1] == "Lookup"){
         seed_matches_chr <- c(x@CostlySeed_r4@label_1L_chr,x@CostlySeed_r4@match_1L_chr)
-        standard_matches_chr <- c(x@CostlyStandards_r4@label_1L_chr,x@CostlyStandards_r4@match_1L_chr)
+        standards_matches_chr <- c(x@CostlyStandards_r4@label_1L_chr,x@CostlyStandards_r4@match_1L_chr)
         testit::assert("Seed matches need to be concepts included in the 'var_ctg_chr' column of the seed dictionary.",
                        identical(setdiff(seed_matches_chr, x@CostlySeed_r4@Ready4useDyad_r4@dictionary_r3$var_ctg_chr), character(0)))
         testit::assert("Standards matches values need to be concepts included in the 'var_ctg_chr' column of the standards dictionary.",

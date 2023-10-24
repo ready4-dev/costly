@@ -21,3 +21,13 @@ reference:
   - CostlySeed
   - CostlyStandards
   - CostlyCorrespondences
+  - CostlyCountries
+  - CostlyCurrencies
+- title: "Methods"
+- contents:
+  - manufacture-CostlyCorrespondences
+  - manufacture-CostlyCountries
+  - manufacture-CostlyCurrencies
+  - procure-CostlySource
+  - ratify-CostlyCorrespondences
+  - renew-CostlyCorrespondences

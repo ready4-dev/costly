@@ -24,14 +24,7 @@ make_country_correspondences <- function(option_1L_chr = "custom",
 }
 make_country_standards <- function(as_list_1L_lgl = F,
                                    append_ls = NULL){
-  X <- ready4use::Ready4useDyad()
-  X@ds_tb <- get_country_standards() %>% tibble::as_tibble()
-  X@dictionary_r3 <- ready4use::renew.ready4use_dictionary(X@dictionary_r3,
-                                                           var_nm_chr = names(X@ds_tb),
-                                                           var_ctg_chr = c("A2", "A3" ,"N", "Country", "Official", "Common"),
-                                                           var_desc_chr = c("Alpabetical country code (two letters)","Alpabetical country code (three letters)",
-                                                                            "Numeric country code", "Country name", "Country name (official)", "Country name (common alternative)"),
-                                                           var_type_chr = purrr::map_chr(X@ds_tb, ~class(.x)[1]) %>% unname())
+  X <- add_country_standards()
   standards_xx <- make_standards_xx(as_list_1L_lgl,
                                     append_ls = append_ls,
                                     var_nms_chr = get_country_standards(T),
@@ -57,14 +50,7 @@ make_currency_ls <- function(country_1L_chr, # Needs upating?
 }
 make_currency_standards <- function(as_list_1L_lgl = F,
                                     append_ls = NULL){
-  X <- ready4use::Ready4useDyad()
-  X@ds_tb <- get_currency_standards() %>% tibble::as_tibble()
-  X@dictionary_r3 <- ready4use::renew.ready4use_dictionary(X@dictionary_r3,
-                                                           var_nm_chr = names(X@ds_tb),
-                                                           var_ctg_chr = c("A3" ,"N", "Currency"),
-                                                           var_desc_chr = c("Alpabetical currency code (three letters)",
-                                                                            "Numeric currency code", "Currency name"),
-                                                           var_type_chr = purrr::map_chr(X@ds_tb, ~ class(.x)[1]) %>% unname())
+  X <- add_curency_standards()
   standards_xx <- make_standards_xx(as_list_1L_lgl,
                                     append_ls = append_ls,
                                     var_nms_chr = get_currency_standards(T),
