@@ -1,7 +1,8 @@
 #' CostlySource
-#'
+#' 
 #' Input dataset (and metadata) for generating standardised costing datasets.
-#'
+#' 
+
 #' @slot Ready4useDyad_r4 A dataset and data dictionary pair. (a ready4 S4)
 #' @slot include_chr Include (a character vector)
 #' @slot label_1L_chrs  (an instance of the character class)

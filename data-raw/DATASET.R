@@ -51,21 +51,21 @@ y <- ready4class::ready4class_constructor() %>%
                                                                                     label_1L_chr = "\"Standardised\"",
                                                                                     match_1L_chr = "\"A3\"")),
                                                                 class_desc_chr = "Input dataset (and metadata) for generating standardised costing datasets.",
-                                                                parent_class_chr = "Ready4Module")#,
-                   # ready4class::make_pt_ready4class_constructor(make_s3_lgl = FALSE,
-                   #                                              name_stub_chr = "Seed",
-                   #                                              slots_ls = list("args_ls") %>% list(),
-                   #                                              pt_ls = list("list") %>% list(),
-                   #                                              vals_ls = list(list(args_ls = "list()")),
-                   #                                              class_desc_chr = "Original (non-standardised) dataset (and metadata).",
-                   #                                              parent_class_chr = "CostlySource"),
-                   # ready4class::make_pt_ready4class_constructor(make_s3_lgl = FALSE,
-                   #                                              name_stub_chr = "Standards",
-                   #                                              slots_ls = list("args_ls") %>% list(),
-                   #                                              pt_ls = list("list") %>% list(),
-                   #                                              vals_ls = list(list(args_ls = "list()")),
-                   #                                              class_desc_chr = "Dataset (and metadata) defining the allowable values of specified variables.",
-                   #                                              parent_class_chr = "CostlySource"),
+                                                                parent_class_chr = "Ready4Module"),
+                   ready4class::make_pt_ready4class_constructor(make_s3_lgl = FALSE,
+                                                                name_stub_chr = "Seed",
+                                                                slots_ls = list("args_ls") %>% list(),
+                                                                pt_ls = list("list") %>% list(),
+                                                                vals_ls = list(list(args_ls = "list()")),
+                                                                class_desc_chr = "Original (non-standardised) dataset (and metadata).",
+                                                                parent_class_chr = "CostlySource"),
+                   ready4class::make_pt_ready4class_constructor(make_s3_lgl = FALSE,
+                                                                name_stub_chr = "Standards",
+                                                                slots_ls = list("args_ls") %>% list(),
+                                                                pt_ls = list("list") %>% list(),
+                                                                vals_ls = list(list(args_ls = "list()")),
+                                                                class_desc_chr = "Dataset (and metadata) defining the allowable values of specified variables.",
+                                                                parent_class_chr = "CostlySource")#,
                    # ready4class::make_pt_ready4class_constructor(make_s3_lgl = FALSE,
                    #                                              name_stub_chr = "Correspondences",
                    #                                              slots_ls = list("CostlySeed_r4",
@@ -115,6 +115,10 @@ z <- ready4pack::make_pt_ready4pack_manifest(x,
                                              constructor_r3 = y) %>%
   ready4pack::ready4pack_manifest()
 z <- ready4::author(z)
+readLines("R/C4_CostlySource.R") %>% # Temporary fix until I work out why this stray include has been added.
+  stringr::str_replace_all("#' @include ", "") %>%
+  writeLines(con = "R/C4_CostlySource.R")
+
 ready4::write_extra_pkgs_to_actions(consent_1L_chr = "Y")
 ready4::write_to_edit_workflow("pkgdown.yaml", consent_1L_chr = "Y") # In other packages, run for "test-coverage.yaml" as well.
 readLines("_pkgdown.yml") %>%

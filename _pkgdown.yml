@@ -18,3 +18,5 @@ reference:
 - title: "S4 Classes"
 - contents:
   - CostlySource
+  - CostlySeed
+  - CostlyStandards
