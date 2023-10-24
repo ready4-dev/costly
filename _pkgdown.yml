@@ -15,3 +15,8 @@ home:
 development:
   mode: auto
 reference:
+- title: "S4 Classes"
+- contents:
+  - CostlySource
+  - CostlySeed
+  - CostlyStandards

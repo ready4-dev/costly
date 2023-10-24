@@ -29,6 +29,10 @@ y <- ratify(renew(x, new_val_xx = character(0), what_1L_chr = "logic"),
             new_val_xx = make_country_correspondences("currencies"))
 #y@results_ls
 y <- ratify(x, new_val_xx = make_country_correspondences("currencies"))
+
+
+
+
 # A <- vicinity::VicinityProfile()
 # A@country_chr <- "Australia"
 # ready4::get_from_lup_obj(ISOcodes::ISO_3166_1,
