@@ -1,7 +1,7 @@
 Package: costly
 Title: Develop, Use and Share Unit Cost Datasets for Health Economic
     Analysis
-Version: 0.0.0.9007
+Version: 0.0.0.9008
 Authors@R: c(
     person("Matthew", "Hamilton", , "matthew.hamilton1@monash.edu", role = c("aut", "cre", "fnd"),
            comment = c(ORCID = "0000-0001-7407-9194")),
@@ -47,8 +47,10 @@ Collate:
     'C4_CostlyStandards.R'
     'C4_CostlySeed.R'
     'C4_CostlyCorrespondences.R'
-    'costly-package.R'
     'fn_add.R'
+    'C4_CostlyCountries.R'
+    'C4_CostlyCurrencies.R'
+    'costly-package.R'
     'fn_get.R'
     'fn_make.R'
     'fn_transform.R'
