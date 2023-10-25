@@ -63,11 +63,11 @@ y <- ratify(x, new_val_xx = NULL)
 ```
 ```{r eval=FALSE}
 # (Not run) Inspect results
-#y@results_ls$Country_Output_Correspondences
+y@results_ls$Country_Output_Correspondences
 ```
 ```{r}
-# y <- ratify(renew(x, new_val_xx = character(0), what_1L_chr = "logic"),
-#             new_val_xx = make_country_correspondences("currencies"))
+y <- ratify(renew(x, new_val_xx = character(0), what_1L_chr = "logic"),
+            new_val_xx = make_country_correspondences("currencies"))
 
 ```
 

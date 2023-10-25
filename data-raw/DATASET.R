@@ -87,11 +87,11 @@ y <- ready4class::ready4class_constructor() %>%
                                                                 vals_ls = list(list(CostlySeed_r4 = "CostlySeed()",
                                                                                     CostlyStandards_r4 = "CostlyStandards()",
                                                                                     correspondences_r3 = "ready4show::ready4show_correspondences()",
-                                                                                    #args_ls = "list()",
+                                                                                    args_ls = "list(list())",
                                                                                     force_standard_1L_lgl = "F",
                                                                                     fuzzy_logic_1L_chr = "character(0)",
-                                                                                    max_distance_1L_dbl = "Inf"#,
-                                                                                    #results_ls = "list()"
+                                                                                    max_distance_1L_dbl = "Inf",
+                                                                                    results_ls = "list(list())"
                                                                                     )),
                                                                 class_desc_chr = "Collection of input, standards definition and results datasets for projects to generate standardised costing datasets.",
                                                                 parent_class_chr = "Ready4Module",

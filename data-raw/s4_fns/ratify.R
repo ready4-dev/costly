@@ -24,7 +24,7 @@ ratify_CostlyCorrespondences <- function(x,
                                                               what_1L_chr = "names"),
                                       sort_1L_lgl = sort_1L_lgl)
   x@results_ls <- make_standardised_dss(x@CostlySeed_r4@label_1L_chr,
-                                        lookup_Ready4useDyad = ready4use::Ready4useDyad(ds_tb = tibble::as_data_frame(ds_df), dictionary_r3 = x@CostlySeed_r4@Ready4useDyad_r4@dictionary_r3),
+                                        lookup_Ready4useDyad = ready4use::Ready4useDyad(ds_tb = as.data.frame(ds_df), dictionary_r3 = x@CostlySeed_r4@Ready4useDyad_r4@dictionary_r3),
                                         seed_Ready4useDyad = x@CostlySeed_r4@Ready4useDyad_r4,
                                         standards_Ready4useDyad = x@CostlyStandards_r4@Ready4useDyad_r4,
                                         validation_ls = validation_ls,
