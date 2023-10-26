@@ -14,6 +14,7 @@
 #' @export 
 #' @importFrom dplyr pull
 #' @importFrom ready4use Ready4useDyad
+#' @importFrom tibble as_tibble
 #' @importFrom ready4 ratify
 methods::setMethod("ratify", "CostlyCorrespondences", function (x, new_val_xx = "identity", sort_1L_lgl = T, type_1L_chr = make_ds_names(type_chr = character(0))[1:2], 
     what_chr = make_ds_names(type_chr = character(0)), ...) 
@@ -39,7 +40,7 @@ methods::setMethod("ratify", "CostlyCorrespondences", function (x, new_val_xx = 
         matches_chr = x@CostlySeed_r4@label_1L_chr, what_1L_chr = "names"), 
         sort_1L_lgl = sort_1L_lgl)
     x@results_ls <- make_standardised_dss(x@CostlySeed_r4@label_1L_chr, 
-        lookup_Ready4useDyad = ready4use::Ready4useDyad(ds_tb = as.data.frame(ds_df), 
+        lookup_Ready4useDyad = ready4use::Ready4useDyad(ds_tb = tibble::as_tibble(ds_df), 
             dictionary_r3 = x@CostlySeed_r4@Ready4useDyad_r4@dictionary_r3), 
         seed_Ready4useDyad = x@CostlySeed_r4@Ready4useDyad_r4, 
         standards_Ready4useDyad = x@CostlyStandards_r4@Ready4useDyad_r4, 

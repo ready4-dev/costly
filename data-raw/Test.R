@@ -42,3 +42,84 @@ y <- ratify(x, new_val_xx = make_country_correspondences("currencies"))
 #   countrycode::countrycode("iso3c","iso4217c")
 
 
+# ```{r}
+#
+# # x <- renew(x,
+# #            new_val_xx = add_default_currency_seed(x@CostlySeed_r4, include_1L_chr = "Country"),
+# #            what_1L_chr = "seed")
+# #x <- renew(x, "jw", type_1L_chr = "slot", what_1L_chr = "logic")
+#
+# ```
+#
+#
+# ```{r}
+# # y <- ratify(x, new_val_xx = "identity")
+# ```
+#
+# ```{r eval=FALSE}
+# # y@results_ls$Country_Output_Validation$Invalid_Values
+# ```
+# ```{r}
+# # x <- renew(x, "jw", type_1L_chr = "slot", what_1L_chr = "logic")
+# # y <- ratify(x, new_val_xx = NULL)
+# ```
+#
+# ```{r eval=FALSE}
+# # (Not run) Inspect results
+# #y@results_ls$Country_Output_Validation$Invalid_Values
+# ```
+# ```{r eval=FALSE}
+# # (Not run) Inspect results
+# #y@results_ls$Country_Output_Correspondences
+# ```
+#
+# ```{r}
+# # Not run
+# # z <- ready4show::renew.ready4show_correspondences(ready4show::ready4show_correspondences(),
+# #         old_nms_chr = c("old_name_1", "old_name_2", "etc...."), new_nms_chr = c("new_name_1", "new_name_2", "etc...."))
+# ```
+#
+# ```{r}
+# # z <- make_country_correspondences("currencies")
+# ```
+#
+# ```{r}
+# # z
+# ```
+#
+# ```{r echo=FALSE}
+# # To apply correspondences table without fuzzy logic
+# # x <- renew(x, new_val_xx = character(0), what_1L_chr = "logic")
+# ```
+#
+# ```{r}
+# # y <- ratify(x, new_val_xx = z)
+# ```
+# ```{r eval=FALSE}
+# # Inspect results
+# y@results_ls$Country_Output_Validation$Invalid_Values
+# ```
+# ```{r}
+# y <- renew(y, T, type_1L_chr = "slot", what_1L_chr = "force")
+# y <- ratify(y, new_val_xx = "identity")
+# ```
+#
+# ```{r eval=FALSE}
+# # Inspect results
+# y@results_ls$Country_Output_Validation$Invalid_Values
+# ```
+# ```{r}
+# y@results_ls$Country_Output_Correspondences
+# ```
+#
+# ```{r}
+# X <- y@results_ls$Country_Output_Lookup
+# ```
+#
+# ```{r}
+# renew(X, type_1L_chr = "label") %>%
+#   exhibit(scroll_box_args_ls = list(width = "100%"))
+# ```
+
+
+

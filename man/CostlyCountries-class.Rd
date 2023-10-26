@@ -15,13 +15,13 @@ Collection of input, standards definition and results datasets for projects to g
 
 \item{\code{CostlyStandards_r4}}{Dataset (and metadata) defining the allowable values of specified variables. (a ready4 S4)}
 
-\item{\code{fuzzy_logic_1L_chr}}{Fuzzy logic (a character vector of length one)}
-
 \item{\code{correspondences_r3}}{Correspondences (a ready4 S3)}
 
 \item{\code{args_ls}}{Arguments (a list)}
 
 \item{\code{force_standard_1L_lgl}}{Force standard (a logical vector of length one)}
+
+\item{\code{fuzzy_logic_1L_chr}}{Fuzzy logic (a character vector of length one)}
 
 \item{\code{max_distance_1L_dbl}}{Maximum distance (a double vector of length one)}
 
