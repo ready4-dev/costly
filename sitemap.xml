@@ -10,6 +10,9 @@
     <loc>https://ready4-dev.github.io/costly/LICENSE.html</loc>
   </url>
   <url>
+    <loc>https://ready4-dev.github.io/costly/articles/V_01.html</loc>
+  </url>
+  <url>
     <loc>https://ready4-dev.github.io/costly/articles/costly.html</loc>
   </url>
   <url>
@@ -25,6 +28,12 @@
     <loc>https://ready4-dev.github.io/costly/reference/CostlyCorrespondences-class.html</loc>
   </url>
   <url>
+    <loc>https://ready4-dev.github.io/costly/reference/CostlyCountries-class.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/CostlyCurrencies-class.html</loc>
+  </url>
+  <url>
     <loc>https://ready4-dev.github.io/costly/reference/CostlySeed-class.html</loc>
   </url>
   <url>
@@ -32,6 +41,12 @@
   </url>
   <url>
     <loc>https://ready4-dev.github.io/costly/reference/CostlyStandards-class.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/add_country_standards.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/add_currency_standards.html</loc>
   </url>
   <url>
     <loc>https://ready4-dev.github.io/costly/reference/add_default_country_seed.html</loc>
@@ -109,7 +124,19 @@
     <loc>https://ready4-dev.github.io/costly/reference/make_validation_output.html</loc>
   </url>
   <url>
+    <loc>https://ready4-dev.github.io/costly/reference/manufacture-methods.html</loc>
+  </url>
+  <url>
     <loc>https://ready4-dev.github.io/costly/reference/pipe.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/procure-methods.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/ratify-methods.html</loc>
+  </url>
+  <url>
+    <loc>https://ready4-dev.github.io/costly/reference/renew-methods.html</loc>
   </url>
   <url>
     <loc>https://ready4-dev.github.io/costly/reference/transform_country.html</loc>
