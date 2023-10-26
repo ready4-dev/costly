@@ -24,19 +24,8 @@ A brief overview of some of the intended use of costly tools is provided in the 
 
 - [Standardise Variable Values With Fuzzy Logic And Correspondence Tables](V_01.html)
 
-The steps detailed in that vignette can more succinctly be accomplished with the following code (a country variable specific implementation).
 
-```{r}
-X <- CostlyCountries() # Create CostlyCountries module instance
-X <- renew(X, type_1L_chr = "default") # Specify the dataset to be standardised, the standards for country names and partial correspondences.
-X <- renew(X, "jw", type_1L_chr = "slot", what_1L_chr = "logic") # Specify fuzzy logic type to use to supplement partial correspondences.
-X <- renew(X, T, type_1L_chr = "slot", what_1L_chr = "force") 
-X <- ratify(X) # Create a standardised dataset and validate it against the standards dataset.
-```
-
-
-
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 # Still buggy - need to fix
 #Not yet represented as a vignette is the logic to standardise variable values using lookup tables. The basic logic (specific to currency variables) is as follows.
 Y <- CostlyCountries()

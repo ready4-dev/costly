@@ -121,7 +121,7 @@ update_module_slot <- function(x_r4, # Be careful about potentially making this 
                                what_1L_chr,
                                new_val_xx = NULL){
   testit::assert("x_r4 must be a Ready4Module",
-                 inherits(x, "Ready4Module"))
+                 inherits(x_r4, "Ready4Module"))
   testit::assert("y_r3 must be a correspondences lookup that includes `old_nms_chr` and `new_nms_chr` columns",
                  identical(setdiff(c("old_nms_chr", "new_nms_chr"), names(y_r3)), character(0)))
   match.arg(what_1L_chr, choices = y_r3$old_nms_chr)

@@ -24,7 +24,6 @@ methods::setMethod("renew", "CostlyCorrespondences", function (x, new_val_xx = N
     }
     if (type_1L_chr %in% c("exploratory", "final", "slot")) {
         y <- manufacture(x, what_1L_chr = "shorthand")
-        what_1L_chr <- match.arg(what_1L_chr, choices = y$old_nms_chr)
         if (what_1L_chr == "correspondences") {
             if (!is.null(new_val_xx) && !identical(new_val_xx, 
                 "identity")) {

@@ -24,6 +24,17 @@ library(ready4use)
 library(costly)
 ```
 
+## In brief
+The steps described and explained in this vignette can also be (more succinctly) accomplished with the following code.
+
+```{r}
+X <- CostlyCountries() # Create a CostlyCountries module instance.
+X <- renew(X, type_1L_chr = "default") # Specify a seed dataset, a standards dataset and partial correspondences between the two.
+X <- renew(X, "jw", type_1L_chr = "slot", what_1L_chr = "logic") # Specify the fuzzy logic algorithm to use
+X <- renew(X, T, type_1L_chr = "slot", what_1L_chr = "force") # Specify that any values in updated dataset not in standards dataset will be removed.
+X <- ratify(X) # Create a standardised dataset and validate it against the standards dataset.
+```
+
 ## Create project
 We begin by creating `X`, an instance of the 'CostlyCorrespondences' [ready4 framework](https://www.ready4-dev.com/) module.
 
