@@ -157,4 +157,6 @@ ready4::write_to_edit_workflow("pkgdown.yaml", consent_1L_chr = "Y") # In other 
 readLines("_pkgdown.yml") %>%
   stringr::str_replace_all("  - text: Model", "  - text: Framework & Model") %>%
   writeLines(con = "_pkgdown.yml")
+usethis::use_package("ISOcodes")
+usethis::use_package("maps")
 devtools::build_vignettes()
