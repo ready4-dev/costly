@@ -17,8 +17,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(costly)
 ```
-This development version of the costly package has been made available as part of the process of testing and documenting the package. 
-Currently there are no vignettes available.
+Costly provides tools to standardise dataset variables so that they can be used in costing data look-up and data-joining algorithms.
 
 A brief overview of some of the intended use of costly tools is provided in the following articles:
 
