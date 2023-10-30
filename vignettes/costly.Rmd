@@ -20,28 +20,28 @@ library(costly)
 This development version of the costly package has been made available as part of the process of testing and documenting the package. 
 Currently there are no vignettes available.
 
-A brief overview of some of the intended use of costly tools is provided in the following article:
+A brief overview of some of the intended use of costly tools is provided in the following articles:
 
-- [Standardise Variable Values With Fuzzy Logic And Correspondence Tables](V_01.html)
+- [Standardise Variable Values With Fuzzy Logic And Correspondence Tables (Country names example)](V_01.html)
+
+- [Standardise Variable Values With Lookup Codes (Currency names example)](V_02.html)
 
 
 ```{r echo=FALSE, eval=FALSE}
-# Still buggy - need to fix
 #Not yet represented as a vignette is the logic to standardise variable values using lookup tables. The basic logic (specific to currency variables) is as follows.
 Y <- CostlyCountries()
 Y <- renew(Y,
            new_val_xx = add_default_currency_seed(Y@CostlySeed_r4, include_1L_chr = "Country"), 
            what_1L_chr = "seed")
 Y <- renew(Y, "jw", type_1L_chr = "slot", what_1L_chr = "logic") 
-Y <- renew(Y, new_val_xx = make_country_correspondences("currencies"), 
-           type_1L_chr = "final", what_1L_chr = "correspondences")
+Y <- renew(Y, new_val_xx = make_country_correspondences("currencies"), what_1L_chr = "correspondences") 
 Y <- ratify(Y)
 Z <- CostlyCurrencies()
 Z <- renew(Z, new_val_xx = add_default_currency_seed(Z@CostlySeed_r4,
                                                      Ready4useDyad_r4 = Y@results_ls$Country_Output_Lookup), 
            what_1L_chr = "seed")
 Z <- ratify(Z, type_1L_chr = "Lookup")
-Z <- renew(Y, T, type_1L_chr = "slot", what_1L_chr = "force") 
+Z <- renew(Z, T, type_1L_chr = "slot", what_1L_chr = "force") 
 Z <- ratify(Z, type_1L_chr = "Lookup")
 ```
 

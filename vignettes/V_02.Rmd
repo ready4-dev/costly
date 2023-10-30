@@ -1,0 +1,179 @@
+---
+title: Standardise Variable Values With Lookup Codes
+output: rmarkdown::html_vignette
+# output: 
+#   rmarkdown::html_vignette:
+#     toc: true
+#   pdf_document:
+#     highlight: null
+#     number_sections: yes
+vignette: >
+  %\VignetteIndexEntry{Standardise Variable Values With Lookup Codes}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r echo = F}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r results='hide', message=FALSE, warning=FALSE}
+library(ready4)
+library(ready4use)
+library(costly)
+```
+
+Note. Parts of the workflow described in this article are common to steps explained in more detail in the article outlining the workflow using [fuzzy logic And correspondence tables](V_01.html).
+
+## In brief
+The steps described and explained in this vignette can also be (more succinctly) accomplished with the following code.
+
+```{r}
+X <- CostlyCountries()
+X <- renew(X,
+           new_val_xx = add_default_currency_seed(X@CostlySeed_r4, include_1L_chr = "Country"), 
+           what_1L_chr = "seed")
+X <- renew(X, "jw", type_1L_chr = "slot", what_1L_chr = "logic") 
+X <- renew(X, new_val_xx = make_country_correspondences("currencies"), what_1L_chr = "correspondences") 
+X <- renew(X, T, type_1L_chr = "slot", what_1L_chr = "force") 
+X <- ratify(X)
+Y <- CostlyCurrencies()
+Y <- renew(Y, new_val_xx = add_default_currency_seed(Y@CostlySeed_r4,
+                                                     Ready4useDyad_r4 = X@results_ls$Country_Output_Lookup), 
+           what_1L_chr = "seed")
+Y <- ratify(Y, type_1L_chr = "Lookup")
+Y <- renew(Y, T, type_1L_chr = "slot", what_1L_chr = "force") 
+Y <- ratify(Y, type_1L_chr = "Lookup")
+```
+
+## Create project
+We begin by creating `X`, a `CostlyCorrespondences` module instance.
+
+```{r}
+X <- CostlyCorrespondences()
+```
+
+## Supply seed dataset
+We begin by creating a `CostlySeed` module instance that includes a dataset containing our variable of interest (in this case, countries). The dataset needs to be paired with a dataset dictionary using the `Ready4useDyad` module from the [ready4use R library](https://ready4-dev.github.io/ready4use/). You can supply a custom standards dataset (a tibble), dictionary (a ready4use_dictionary) and the concept represented by our variable of interest using a command of the following format.
+
+```{r eval = F}
+# Not run
+# A <- CostlySeed(Ready4useDyad_r4 = Ready4useDyad(ds_tb = tibble::tibble(), dictionary_r3 = ready4use_dictionary()), include_chr = c("Country"), label_1L_chr = "Country")
+```
+
+The `add_default_country_seed` function will perform the previous step using values that pair the `world.cities` dataset of the `maps` R library with an appropriate dictionary and specifies countries as the concept we will be standardising.
+
+```{r}
+A <- CostlySeed() %>% add_default_currency_seed()
+```
+
+We now add `A` to a new `CostlyCorrespondences` module instance `Y`, which we use to standardise the country concept variable using a [fuzzy logic And correspondence tables workflow](V_01.html).
+
+```{r}
+A@include_chr <- A@label_1L_chr <- "Country"
+Y <- CostlyCountries(CostlySeed_r4 = A) %>%
+  renew("jw", type_1L_chr = "slot", what_1L_chr = "logic") %>%
+  renew(new_val_xx = make_country_correspondences("currencies"), what_1L_chr = "correspondences") %>%
+  renew(T, type_1L_chr = "slot", what_1L_chr = "force") %>%
+  ratify()
+```
+
+We now update `X` with the results `Ready4useDyad` from `Y` (a seed dataset for which country names have been standardised).
+
+```{r}
+X <- renew(X, new_val_xx = CostlySeed(Ready4useDyad_r4 = Y@results_ls$Country_Output_Lookup), what_1L_chr = "seed") # 
+```
+
+We can now inspect the first few records from our labelled seed dataset.
+
+```{r}
+renewSlot(X, "CostlySeed_r4@Ready4useDyad_r4", type_1L_chr = "label") %>%
+exhibitSlot("CostlySeed_r4@Ready4useDyad_r4", display_1L_chr = "head", scroll_box_args_ls = list(width = "100%"))
+```
+
+We can also inspect the seed dataset's dictionary.
+```{r}
+exhibitSlot(X, "CostlySeed_r4@Ready4useDyad_r4", type_1L_chr = "dict", scroll_box_args_ls = list(width = "100%"))
+```
+
+We specify the seed dataset concept that we are looking to standardise and the concept that we will use to lookup replacement values from the standards dataset.
+
+```{r}
+X@CostlySeed_r4@label_1L_chr <- "Currency"
+X@CostlySeed_r4@match_1L_chr <- "A3"
+```
+
+## Specify standards
+We can now create `B`, a `CostlyStandards` module instance that includes a dataset specifying the complete list of allowable variable values. In many cases using the `ISO_4217` dataset from the `ISOcodes` library will be the optimal source of standardised names for currencies. Using the `add_currency_standards` function will pair this dataset with a dictionary.
+
+```{r}
+B <- CostlyStandards(Ready4useDyad_r4 = Ready4useDyad() %>% add_currency_standards())
+```
+
+We can inspect the first few cases of the labelled version of the standards dataset in `B`.
+```{r}
+renewSlot(B, "Ready4useDyad_r4", type_1L_chr = "label") %>% 
+  exhibitSlot("Ready4useDyad_r4", display_1L_chr = "head", scroll_box_args_ls = list(width = "100%"))
+```
+
+We can also inspect the data dictionary contained in `B`.
+```{r}
+exhibitSlot(B, "Ready4useDyad_r4", type_1L_chr = "dict", scroll_box_args_ls = list(width = "100%"))
+```
+
+We can now specifying both the concept ("Currency") that specifies allowable values for our target variable and the concepts we plan to use for lookup matching (described below).
+
+```{r}
+#B@include_chr <- c("Currency", "Letter")
+B@label_1L_chr <- "Currency"
+B@match_1L_chr <- "A3"
+```
+
+We now add `B` to `X`.
+
+```{r}
+X <- renew(X, B, what_1L_chr = "standards")
+```
+
+## Compare variable of interest values from seed and standards dataset.
+Currently, the majority of our currency names need to be standardised. 
+
+```{r}
+X <- ratify(X, new_val_xx = "identity")
+X@results_ls$Currency_Output_Validation$Invalid_Values
+```
+
+Standardised currency names not currently present in our seed dataset are as follows.
+```{r eval=FALSE}
+X@results_ls$Currency_Output_Validation$Absent_Values
+```
+
+## Standardise variable values
+We standardise the target variable values, specifying that we are using the lookup codes method and not the fuzzy-logic / correspondences method.
+
+```{r}
+X <- ratify(X, type_1L_chr = "Lookup")
+```
+
+This significantly reduces the umber of non standard values for our target variable.
+```{r}
+X@results_ls$Currency_Output_Validation$Invalid_Values
+```
+
+```{r eval=FALSE, echo=FALSE}
+# X@results_ls$Currency_Output_Validation$Absent_Values
+```
+
+If we wish we can remove the non-standardised values.
+
+```{r}
+X <- renew(X, T, type_1L_chr = "slot", what_1L_chr = "force") 
+X <- ratify(X, type_1L_chr = "Lookup")
+```
+
+We can no inspect our results a dataset for which the country names and currency names now conform to ISO standards.
+```{r}
+X@results_ls$Currency_Output_Lookup %>%
+  renew(type_1L_chr = "label") %>%
+  exhibit(scroll_box_args_ls = list(width = "100%"))
+```

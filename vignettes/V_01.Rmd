@@ -28,68 +28,29 @@ library(costly)
 The steps described and explained in this vignette can also be (more succinctly) accomplished with the following code.
 
 ```{r}
-X <- CostlyCountries() # Create a CostlyCountries module instance.
-X <- renew(X, type_1L_chr = "default") # Specify a seed dataset, a standards dataset and partial correspondences between the two.
-X <- renew(X, "jw", type_1L_chr = "slot", what_1L_chr = "logic") # Specify the fuzzy logic algorithm to use
-X <- renew(X, T, type_1L_chr = "slot", what_1L_chr = "force") # Specify that any values in updated dataset not in standards dataset will be removed.
-X <- ratify(X) # Create a standardised dataset and validate it against the standards dataset.
+X <- CostlyCountries() 
+X <- renew(X, type_1L_chr = "default") 
+X <- renew(X, "jw", type_1L_chr = "slot", what_1L_chr = "logic") 
+X <- renew(X, T, type_1L_chr = "slot", what_1L_chr = "force")
+X <- ratify(X) 
 ```
 
 ## Create project
-We begin by creating `X`, an instance of the 'CostlyCorrespondences' [ready4 framework](https://www.ready4-dev.com/) module.
+We begin by creating `X`, an instance of the `CostlyCorrespondences` module.
 
 ```{r}
 X <- CostlyCorrespondences()
 ```
 
-## Specify standards
-We next must specify a dataset that includes the complete list of allowable variable values. The dataset needs to be paired with a dataset dictionary using the `Ready4useDyad` module from the [ready4use R library](https://ready4-dev.github.io/ready4use/).
-
-You can supply a custom standards dataset (a tibble) and dictionary (a ready4use_dictionary) using a command of the following format.
-
-```{r}
-# Not run
-# Y <- Ready4useDyad(ds_tb = tibble::tibble(), dictionary_r3 = ready4use_dictionary())
-```
-
-In many cases using the `ISO_3166_1` dataset from the `ISOcodes` library will be the optimal choice. We can use the `add_country_standards` function to pair this dataset with its dictionary and create `Y`, a `Ready4useDyad`.
-
-```{r}
-Y <- Ready4useDyad() %>% add_country_standards()
-```
-
-We can inspect the first few cases of the labelled version of the dataset in `Y`.
-```{r}
-renew(Y, type_1L_chr = "label") %>% 
-  exhibit(display_1L_chr = "head", scroll_box_args_ls = list(width = "100%"))
-```
-
-We can also inspect the data dictionary contained in `Y`.
-```{r}
-exhibit(Y, type_1L_chr = "dict", scroll_box_args_ls = list(width = "100%"))
-```
-
-We can now create `Z`, an instance of the `CostlyStandards` ready4 framework module. The new object includes `Y` and metadata specifying both all categories of variable types we can use for fuzzy logic matching (described below) and the category type that specifies the allowable values for our target variable.
-```{r}
-Z <- CostlyStandards(Ready4useDyad_r4 = Y, include_chr = c("Country", "Official","Common","A3","A2"), label_1L_chr = "Country")
-```
-
-We now add `Z` to `X`.
-
-```{r}
-X <- renew(X, Z, what_1L_chr = "standards")
-```
-
-
 ## Supply seed dataset
-We now supply a seed dataset that contains values for our variable of interest (countries) that may not yet conform to the standards we previously specified. This workflow for this step is similar to that for specifying standards, except that instead of a `CostlyStandards` module we use a `CostlySeed` module.
+We begin by creating a `CostlySeed` module instance that includes a dataset containing our variable of interest (in this case, countries). The dataset needs to be paired with a dataset dictionary using the `Ready4useDyad` module from the [ready4use R library](https://ready4-dev.github.io/ready4use/). You can supply a custom standards dataset (a tibble), dictionary (a ready4use_dictionary) and the concept represented by our variable of interest using a command of the following format.
 
 ```{r eval = F}
 # Not run
 # A <- CostlySeed(Ready4useDyad_r4 = Ready4useDyad(ds_tb = tibble::tibble(), dictionary_r3 = ready4use_dictionary()), include_chr = c("Country"), label_1L_chr = "Country")
 ```
 
-We can use the `add_default_country_seed` function to perform these steps with values that create a `CostlySeed` instance which pairs the `world.cities` dataset of the `maps` R library with an appropriate dictionary and identifies the countries variable.
+The `add_default_country_seed` function will perform the previous step using values that pair the `world.cities` dataset of the `maps` R library with an appropriate dictionary and specifies countries as the concept we will be standardising.
 
 ```{r}
 A <- CostlySeed() %>% add_default_country_seed()
@@ -119,22 +80,65 @@ We now add `A` to `X`.
 X <- renew(X, A, what_1L_chr = "seed")
 ```
 
+
+## Specify standards
+We next must specify a dataset that includes the complete list of allowable variable values. 
+
+This workflow for this step is similar to that for specifying standards, except that instead of a `CostlySeed` module we use a `CostlyStandards` module.
+
+```{r}
+# Not run
+# Y <- CostlyStandards(Ready4useDyad_r4 = Ready4useDyad(ds_tb = tibble::tibble(), dictionary_r3 = ready4use_dictionary()))
+```
+
+In many cases using the `ISO_3166_1` dataset from the `ISOcodes` library will be the optimal choice for the standardised form of country names. We can use the `add_country_standards` function to pair this dataset with its dictionary and create `B`, a `CostlyStandards` module instance. 
+
+```{r}
+B <- CostlyStandards(Ready4useDyad_r4 = Ready4useDyad() %>% add_country_standards())
+```
+
+We can inspect the first few cases of the labelled version of the dataset in `B`.
+```{r}
+renewSlot(B, "Ready4useDyad_r4", type_1L_chr = "label") %>% 
+  exhibitSlot("Ready4useDyad_r4", display_1L_chr = "head", scroll_box_args_ls = list(width = "100%"))
+```
+
+We can also inspect the data dictionary contained in `B`.
+```{r}
+exhibitSlot(B, "Ready4useDyad_r4", type_1L_chr = "dict", scroll_box_args_ls = list(width = "100%"))
+```
+
+We can now specifying both the concept (from the "Category" column of the data dictionary) that specifies allowable values for our target variable and all concepts we plan to use for fuzzy logic matching (described below).
+
+```{r}
+B@label_1L_chr <- "Country"
+B@include_chr <- c("Country", "Official","Common","A3","A2")
+```
+
+We now add `B` to `X`.
+
+```{r}
+X <- renew(X, B, what_1L_chr = "standards")
+```
+
+
 ## Compare variable of interest values from seed and standards dataset.
 To identify any disparities between the variable of interest in our seed and standards datasets we can use the `ratify` method. Supplying the value "identity" ensures that the output will differ from input only in the slot reserved for results.
 
 ```{r}
-B <- ratify(X, new_val_xx = "identity")
+X <- ratify(X, new_val_xx = "identity")
 ```
 
 We can now identify the values from our seed dataset variable of interest that were not in our standard values.
 ```{r eval=FALSE}
-B@results_ls$Country_Output_Validation$Invalid_Values
+X@results_ls$Country_Output_Validation$Invalid_Values
 ```
 We can also identify standard values that were not present in the seed dataset variable of interest.
 ```{r}
-B@results_ls$Country_Output_Validation$Absent_Values
+X@results_ls$Country_Output_Validation$Absent_Values
 ```
 
+## Standardise variable values
 We can explore the extent to which we can use fuzzy logic to reconcile some of these discrepancies. To identify the types of fuzzy logic algorithms we could use, run the following command to explore the relevant part of the documentation from the `stringdist` library.
 
 ```{r eval = F}
@@ -142,21 +146,21 @@ We can explore the extent to which we can use fuzzy logic to reconcile some of t
 # help("stringdist-metrics", package=stringdist)
 ```
 
-In this case, we have chosen the	Jaro, or Jaro-Winkler distance method ("jw").
+In this case, we have chosen the Jaro, or Jaro-Winkler distance method ("jw").
 ```{r}
-B <- renew(B, "jw", type_1L_chr = "slot", what_1L_chr = "logic") 
-B <- ratify(B, new_val_xx = NULL)
+X <- renew(X, "jw", type_1L_chr = "slot", what_1L_chr = "logic") 
+X <- ratify(X, new_val_xx = NULL)
 ```
 
-This method will replace every previously invalid seed dataset variable value with the best available match identified by the chosen algorithm.
+This method will replace every previously invalid seed dataset variable value with the best available match identified by the selected fuzzy logic algorithm. 
 
 ```{r }
-B@results_ls$Country_Output_Validation$Invalid_Values
+X@results_ls$Country_Output_Validation$Invalid_Values
 ```
 However, some of the replacements will be spurious as can be seen by inspecting the record of the replacements made.
 
 ```{r }
-B@results_ls$Country_Output_Correspondences
+X@results_ls$Country_Output_Correspondences
 ```
 
 For each of the incorrect correspondences, we will need to manually specify correct values. We can do this using the `ready4show_correspondences` sub-module.
@@ -177,16 +181,16 @@ We can inspect the values of this correspondence table.
 exhibit(a, scroll_box_args_ls = list(width = "100%"))
 ```
 
-When the ratify method was used to apply the fuzzy logic algorithm in a previous step, `B` was modified so that this logic is by default switched off for future calls to `ratify`. If we had created a new correspondence table that specified replacements for all invalid values, this would not be a problem. However, in this example we are only specifying correspondences where the fuzzy logic algorithm failed, so we need to again supply our desired fuzzy logic value.
+When the ratify method was used to apply the fuzzy logic algorithm in a previous step, `X` was modified so that this logic is by default switched off for future calls to `ratify`. If we had created a new correspondence table that specified replacements for all invalid values, this would not be a problem. However, in this example we are only specifying correspondences where the fuzzy logic algorithm failed, so we need to again supply our desired fuzzy logic value.
 
 ```{r }
-B <- renew(B, "jw", type_1L_chr = "slot", what_1L_chr = "logic") 
+X <- renew(X, "jw", type_1L_chr = "slot", what_1L_chr = "logic") 
 ```
 
 We now rerun our ratify method (which in this example will combine fuzzy logic with lookups from the manually created correspondences table).
 
 ```{r}
-B <- ratify(B, new_val_xx = a)
+X <- ratify(X, new_val_xx = a)
 ```
 
 We once again inspect results.
@@ -194,40 +198,40 @@ We once again inspect results.
 Our correspondences table looks better.
 
 ```{r}
-B@results_ls$Country_Output_Correspondences
+X@results_ls$Country_Output_Correspondences
 ```
 
 There is still a value that is not included in our standards.
 
 ```{r }
-B@results_ls$Country_Output_Validation$Invalid_Values
+X@results_ls$Country_Output_Validation$Invalid_Values
 ```
 We can rerun the `ratify` method to force the removal of any record that is not included in our standards dataset.
 ```{r}
-B <- renew(B, T, type_1L_chr = "slot", what_1L_chr = "force") 
-B <- ratify(B, new_val_xx = "identity")
+X <- renew(X, T, type_1L_chr = "slot", what_1L_chr = "force") 
+X <- ratify(X, new_val_xx = "identity")
 ```
 
-So invalid values now remain.
+No invalid values remain.
 
 ```{r }
-B@results_ls$Country_Output_Validation$Invalid_Values
+X@results_ls$Country_Output_Validation$Invalid_Values
 ```
-However, there are also a some values from our standards dataset that are not represented in the updated seed dataset values.  
+However, there are also a some values from our standards dataset that are not represented in the results dataset values.  
 
 ```{r}
-B@results_ls$Country_Output_Validation$Absent_Values
+X@results_ls$Country_Output_Validation$Absent_Values
 ```
-Whether this is a problem or not depends on the intended purposes of the standardised dataset we are creating. We could choose to rerun the previous steps after making edits to either or both of the standards dataset (e.g. we could delete any superfluous, outdated or incorrect records or use an entirely new standards dataset) and seed dataset (e.g. adding new records or recategorising existing records so that there are corresponding values for every missing standard value). In this case we are going to assume that the above missing values are not a cause for concern for the valid use of our updated dataset for it intended purposes. We can now create a new object `D`, which is the updated version of our seed `Ready4useDyad`.
+Whether this is a problem or not depends on the intended purposes of the standardised dataset we are creating. We could choose to rerun the previous steps after making edits to either or both of the standards dataset (e.g. we could delete any superfluous, outdated or incorrect records or use an entirely new standards dataset) and seed dataset (e.g. adding new records or recategorising existing records so that there are corresponding values for every missing standard value). In this case we are going to assume that the above missing values are not a cause for concern for the valid use of our updated dataset for it intended purposes. We can now create a new object `Y`, using our results dataset's `Ready4useDyad` module instance.
 
 ```{r}
-D <- B@results_ls$Country_Output_Lookup
+Y <- X@results_ls$Country_Output_Lookup
 ```
 
-We can inspect the records for capital cities from our new dataset. 
+We can inspect the records for cases corresponding to capital cities from our new dataset. 
 
 ```{r}
-renewSlot(D,"ds_tb",D@ds_tb %>% dplyr::filter(capital==1)) %>%
+renewSlot(Y,"ds_tb",Y@ds_tb %>% dplyr::filter(capital==1)) %>%
   renew(type_1L_chr = "label") %>%
   exhibit(scroll_box_args_ls = list(width = "100%"))
 ```
