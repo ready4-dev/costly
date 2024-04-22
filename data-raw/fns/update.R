@@ -110,12 +110,133 @@ update_currency_correspondences <- function(correspondences_x_r3 = ready4show::r
   }
   return(correspondences_x_r3)
 }
-
 update_currency_default_ls <- function(default_ls,
                                        force_standard_1L_lgl = F){
   default_ls$CostlySeed_r4 <- add_default_currency_seed(default_ls$CostlySeed_r4)
   return(default_ls)
 }
+
+update_medications_lup <- function(medications_lup,
+                                   average_chr = character(0),
+                                   integers_1L_lgl = TRUE, ##??
+                                   arrange_by_1L_chr = "Response",
+                                   arrange_tfmn_fn = identity,
+                                   keep_chr = character(0),
+                                   medication_var_nm_1L_chr = "Legal Instrument Drug",
+                                   milligrams_indx_1L_int = 1L,
+                                   milligrams_var_nm_1L_chr = "AMT Trade Product Pack",
+                                   new_cases_tb = NULL,
+                                   plural_chr = "",
+                                   prices_tb = NULL,
+                                   range_int = NA_integer_,
+                                   reference_1L_int = integer(0),
+                                   rename_meds_lup = ready4show::ready4show_correspondences(),
+                                   rename_prices_lup = ready4show::ready4show_correspondences(),
+                                   replace_blanks_1L_lgl = F,
+                                   spaced_1L_lgl = TRUE,
+                                   type_1L_chr = c("dosage", "validation", "weighted"),
+                                   units_chr = "mg"){
+  type_1L_chr <- match.arg(type_1L_chr)
+  if(is.null(new_cases_tb)){
+    new_cases_tb <- medications_lup %>% dplyr::filter(F)
+  }else{
+    new_cases_tb <- dplyr::bind_rows(medications_lup %>% dplyr::filter(F), new_cases_tb)
+  }
+  if(!identical(rename_meds_lup, ready4show::ready4show_correspondences()) && !is.null(prices_tb)){
+    filtered_tb <- prices_tb %>%
+      dplyr::filter(!!rlang::sym(medication_var_nm_1L_chr) %in% rename_prices_lup$old_nms_chr) %>%
+      dplyr::mutate(!!rlang::sym(medication_var_nm_1L_chr) := !!rlang::sym(medication_var_nm_1L_chr) %>% purrr::map_chr(~ready4::get_from_lup_obj(rename_prices_lup, match_var_nm_1L_chr = "old_nms_chr", match_value_xx = .x, target_var_nm_1L_chr = "new_nms_chr")))
+    new_cases_tb <- dplyr::bind_rows(new_cases_tb,
+                                     medications_lup %>% dplyr::select(c("Response", "Medication")) %>% dplyr::distinct() %>% make_medications_lup(prices_tb = filtered_tb, add_dosage_1L_lgl = F) %>%
+                                       dplyr::filter(!is.na(!!rlang::sym(milligrams_var_nm_1L_chr)))) %>%
+      dplyr::select(names(medications_lup))
+    #medications_lup <- medications_lup %>% dplyr::filter(!Medication %in% rename_prices_lup$new_nms_chr)
+  }
+  if(!identical(rename_meds_lup, ready4show::ready4show_correspondences()) && !is.null(prices_tb)){
+    medications_tb <- medications_lup %>% dplyr::filter(Medication %in% rename_meds_lup$old_nms_chr) %>% dplyr::select(c("Response", "Medication")) %>%
+      dplyr::mutate(Medication = Medication %>% purrr::map_chr(~ready4::get_from_lup_obj(rename_meds_lup, match_var_nm_1L_chr = "old_nms_chr", match_value_xx = .x, target_var_nm_1L_chr = "new_nms_chr")))
+    medications_tb <- medications_tb %>% # make update fn
+      dplyr::left_join(prices_tb %>% dplyr::mutate(Medication = !!rlang::sym(medication_var_nm_1L_chr)))
+    medications_tb <- medications_tb %>%
+      dplyr::select(intersect(names(medications_tb), names(medications_lup)))
+    medications_lup <- medications_lup %>% dplyr::filter(!Medication %in% rename_meds_lup$old_nms_chr)
+    medications_lup <- dplyr::bind_rows(medications_lup,
+                                        medications_tb ) %>%
+      dplyr::arrange(as.numeric(Response)) # make arg
+  }
+  ###
+  ## unmatched_chr <- medications_lup %>% dplyr::filter(is.na(`Item Code`)) %>% dplyr::pull(Medication) # make fn
+  ###
+  ###
+  if(nrow(new_cases_tb)>0){
+    medications_lup <- dplyr::bind_rows(medications_lup %>% dplyr::filter(!Medication %in% c(rename_prices_lup$new_nms_chr, intersect(new_cases_tb$Medication, get_missing_medications(medications_lup)))),
+                                        new_cases_tb %>%
+                                          dplyr::mutate(Response = Medication %>% purrr::map_chr(~ready4::get_from_lup_obj(medications_lup,
+                                                                                                                           target_var_nm_1L_chr = "Response",
+                                                                                                                           match_var_nm_1L_chr = "Medication",
+                                                                                                                           match_value_xx = .x)))) %>% dplyr::arrange(!!rlang::sym(arrange_by_1L_chr) %>% arrange_tfmn_fn())
+  }
+  if(type_1L_chr %in% c("dosage", "weighted")){
+    if(!"Milligrams" %in% names(medications_lup)){
+      medications_lup <- dplyr::mutate(medications_lup, Milligrams = NA_character_)
+    }
+    medications_lup <- dplyr::mutate(medications_lup,
+                                     Milligrams = dplyr::case_when(is.na(!!rlang::sym(milligrams_var_nm_1L_chr)) ~ Milligrams,
+                                                                   T ~ !!rlang::sym(milligrams_var_nm_1L_chr) %>% #`AMT Trade Product Pack` %>%
+                                                                     get_patterns(integers_1L_lgl = integers_1L_lgl, plural_chr = plural_chr, range_int = range_int, replace_blanks_1L_lgl = replace_blanks_1L_lgl,
+                                                                                  spaced_1L_lgl = spaced_1L_lgl, units_chr = units_chr) %>% ## ??
+                                                                     purrr::map_chr(~paste0(.x,collapse = "_"))))
+    #if(!"Per Tablet" %in% names(medications_lup)){
+    medications_lup <- dplyr::mutate(medications_lup, `Per Tablet` = DPMQ /  `Maximum Quantity`) %>%
+      dplyr::mutate(`Per mg` = `Per Tablet` / (Milligrams %>% get_patterns(flatten_1L_lgl = T,
+                                                                           #integers_1L_lgl = F,
+                                                                           range_int = range_int,
+                                                                           spaced_1L_lgl = spaced_1L_lgl,
+                                                                           type_1L_chr = "quantity",
+                                                                           units_chr = units_chr, what_1L_chr = "double", plural_chr = plural_chr,
+                                                                           reference_1L_int = reference_1L_int)))
+    #}
+  }
+  if(!identical(average_chr, character(0))){
+    medications_lup <- #dplyr::left_join(medications_lup,
+      update_medications_lup(medications_lup, arrange_by_1L_chr = arrange_by_1L_chr, arrange_tfmn_fn = arrange_tfmn_fn, integers_1L_lgl = integers_1L_lgl, milligrams_var_nm_1L_chr = milligrams_var_nm_1L_chr,
+                             new_cases_tb = dplyr::bind_rows(medications_lup %>% dplyr::filter(F),
+                                                             suppressWarnings(dplyr::summarise(medications_lup, dplyr::across(c(`Maximum Quantity`,  DPMQ, Milligrams, `Per Tablet`, `Per mg`),
+                                                                                                                              ~ {
+                                                                                                                                if(is.numeric(.x)){
+                                                                                                                                  mean(.x, na.rm = TRUE)
+                                                                                                                                }else{
+                                                                                                                                  .x %>% get_patterns(flatten_1L_lgl = T, range_int = range_int, type_1L_chr = "quantity",
+                                                                                                                                                      units_chr = units_chr, what_1L_chr = "integer", plural_chr = plural_chr,
+                                                                                                                                                      reference_1L_int = reference_1L_int,
+                                                                                                                                                      spaced_1L_lgl = spaced_1L_lgl) %>% # New
+                                                                                                                                    mean(na.rm = TRUE)
+                                                                                                                                }}))) %>%
+                                                               dplyr::mutate(Medication = average_chr,
+                                                                             Milligrams = paste0(Milligrams, " ", units_chr[1]))),
+                             plural_chr = plural_chr, range_int = range_int, replace_blanks_1L_lgl = replace_blanks_1L_lgl,
+                             spaced_1L_lgl = spaced_1L_lgl, units_chr = units_chr)
+  }
+  ###
+  if(!identical(keep_chr, character(0))){
+    medications_lup <- medications_lup %>%
+      dplyr::select(tidyselect::all_of(keep_chr))
+  }
+  if(type_1L_chr == "weighted"){
+    medications_lup <- medications_lup$Response %>% unique() %>% purrr::map_dfr(~dplyr::filter(medications_lup, Response == .x) %>% dplyr::summarise(Response = .x,
+                                                                                                                                                     Medication = paste0(unique(Medication), collapse = " / "),
+                                                                                                                                                     `Per Tablet` = mean(`Per Tablet`, na.rm = TRUE),
+                                                                                                                                                     `Per mg` = mean(`Per mg`, na.rm = TRUE))) %>%
+      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), ~ ifelse(is.nan(.x),NA_real_,.x)))
+  }
+  return(medications_lup)
+}
+
+
+
+
+
+
 update_module_slot <- function(x_r4, # Be careful about potentially making this a Method of Ready4Module - need to think through renew syntax
                                y_r3,
                                what_1L_chr,

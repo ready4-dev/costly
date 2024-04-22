@@ -1,3 +1,17 @@
+make_assignment_lup <-  function(ds_tb, # export to programs pkg
+                                 group_idx_1L_int = 2L,
+                                 group_var_nm_1L_chr = "participation",
+                                 response_id_indcs_int = integer(0),#3L:6L,
+                                 response_id_var_nms_chr = character(0),#c("response_ids_bl_chr","response_ids_8_wk_chr","response_ids_6_mnth_chr","response_ids_ruq_6_mnth_chr")
+                                 uid_idx_1L_int = 1L,
+                                 uid_var_nm_1L_chr = "uid_chr"){
+  if(!tibble::is_tibble(ds_tb))
+    ds_tb <- tibble::as_tibble(ds_tb)
+  assignment_lup <- ds_tb %>% dplyr::select(tidyselect::all_of(c(uid_idx_1L_int, group_idx_1L_int, response_id_indcs_int)))
+  names(assignment_lup) <- c(uid_var_nm_1L_chr, group_var_nm_1L_chr, response_id_var_nms_chr)
+  assignment_lup <- dplyr::filter(assignment_lup, !is.na(!!rlang::sym(uid_var_nm_1L_chr))) %>% dplyr::filter(!!rlang::sym(uid_var_nm_1L_chr) != "")
+  return(assignment_lup)
+}
 make_country_correspondences <- function(option_1L_chr = "custom",
                                          old_nms_chr = character(0),
                                          new_nms_chr = character(0)){
@@ -122,6 +136,91 @@ make_ds_names <- function(label_1L_chr = "Standardised",
     }
   }
   return(names_chr)
+}
+make_medications_lup <- function(key_tb,
+                                 prices_tb,
+                                 add_dosage_1L_lgl = T,
+                                 brand_var_nm_1L_chr = "Brand Name",
+                                 # drop_chr = c("Formulary", "Program", "Manufacturer Code", "Responsible Person", "Maximum Repeats", "Claimed Price for Pack",
+                                 #              "Claimed Price to Pharmacist", "Claimed DPMQ", "Premium","C'wlth Pays Premium"),
+                                 integers_1L_lgl = TRUE, ##??
+                                 keep_chr = c("Response", "Medication", "Legal Instrument MoA", "Brand Name", "Maximum Quantity", "DPMQ", "Maximum Patient Charge", "Milligrams", "AMT Trade Product Pack", "Per Tablet", "Per mg"),
+                                 #medications_lup = NULL,
+                                 medication_var_nm_1L_chr = "`Legal Instrument Drug`",
+                                 milligrams_var_nm_1L_chr = "AMT Trade Product Pack",
+                                 plural_chr = "",
+                                 range_int = NA_integer_,
+                                 reference_1L_int = integer(0),
+                                 rename_meds_lup = ready4show::ready4show_correspondences(),
+                                 replace_blanks_1L_lgl = F,
+                                 spaced_1L_lgl = TRUE,
+
+                                 units_chr = "mg"){
+  medications_lup <- key_tb %>%
+    dplyr::left_join(prices_tb %>% dplyr::mutate(Medication = `Legal Instrument Drug`))
+  ###
+  medications_tb <- medications_lup %>% dplyr::filter(is.na(`Item Code`)) %>% dplyr::select(c("Response", "Medication"))
+  ###
+  medications_lup <- medications_lup %>% dplyr::filter(!is.na(`Item Code`))
+  ###
+  medications_lup <- dplyr::bind_rows(medications_lup, medications_tb %>% # make update fn
+                                        dplyr::left_join(prices_tb %>% dplyr::mutate(Medication = !!rlang::sym(brand_var_nm_1L_chr)))) %>% # make arg
+    dplyr::arrange(as.numeric(Response)) # make arg
+  ###
+  ## unmatched_chr <- medications_lup %>% dplyr::filter(is.na(`Item Code`)) %>% dplyr::pull(Medication) # make fn
+  ###
+  # rename_lup <- ready4show::ready4show_correspondences() %>% # make arg
+  #   ready4show::renew.ready4show_correspondences(old_nms_chr = setdiff(unmatched_chr, c("None","Agomelatine", "Pain relief", "St John’s Wort","Valerian","Vitamins","Other","blank response")),
+  #                                                new_nms_chr = c("Dosulepin", "Fluvoxamine", "Lithium", "Valproic acid"))
+  ###
+  medications_lup <- update_medications_lup(medications_lup,
+                                            integers_1L_lgl = integers_1L_lgl, ##??
+                                            keep_chr = keep_chr,
+                                            medication_var_nm_1L_chr = medication_var_nm_1L_chr,
+                                            milligrams_var_nm_1L_chr = milligrams_var_nm_1L_chr,
+                                            plural_chr = plural_chr,
+                                            prices_tb = prices_tb,
+                                            range_int = range_int,
+                                            reference_1L_int =  reference_1L_int,
+                                            rename_meds_lup = rename_meds_lup,
+                                            replace_blanks_1L_lgl = replace_blanks_1L_lgl,
+                                            spaced_1L_lgl = spaced_1L_lgl,
+                                            type_1L_chr = "dosage",
+                                            units_chr = units_chr)
+
+
+  return(medications_lup)
+
+}
+make_period_patterns <- function(range_int = 1L:12L,
+                                 integers_1L_lgl = TRUE,
+                                 plural_chr = "s",
+                                 spaced_1L_lgl = TRUE,
+                                 type_1L_chr = c("english","numeric","blank"),
+                                 units_chr = c("minute","hour","week","month","year")){
+  type_1L_chr <- match.arg(type_1L_chr)
+  period_patterns_chr <- purrr::map(plural_chr,
+                                    ~ {
+                                      plural_1L_chr <- .x
+                                      spacing_chr <- c("","\\s+")
+                                      if(!is.na(spaced_1L_lgl)){
+                                        spacing_chr <- spacing_chr[spaced_1L_lgl +1]
+                                      }
+                                      if(type_1L_chr == "english"){
+                                        patterns_chr <- units_chr %>% purrr::map(~{
+                                          unit_1L_chr <- .x
+                                          range_int %>% purrr::map(~paste0(english::words(.x),paste0(spacing_chr, unit_1L_chr),ifelse(.x>1,plural_1L_chr,""))) %>% purrr::flatten_chr()}) %>% purrr::flatten_chr()
+                                      }
+                                      if(type_1L_chr %in% c("blank","numeric")){
+                                        patterns_chr <- c(paste0(ifelse(type_1L_chr == "blank","",1),spacing_chr,units_chr),
+                                                          spacing_chr %>% purrr::map(~paste0(ifelse(type_1L_chr == "blank","",
+                                                                                                    ifelse(integers_1L_lgl,"[[:digit:]]+","\\d*\\.?\\d+")),.x,units_chr,plural_1L_chr)) %>% purrr::flatten_chr())
+                                      }
+                                      patterns_chr
+                                    }) %>% purrr::flatten_chr() %>% unique()
+
+
+  return(period_patterns_chr)
 }
 make_standardised_dss <- function(label_1L_chr = "Country",
                                   lookup_Ready4useDyad = ready4use::Ready4useDyad(),

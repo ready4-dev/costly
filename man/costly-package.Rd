@@ -2,7 +2,6 @@
 % Please edit documentation in R/costly-package.R, R/pkg_costly.R
 \docType{package}
 \name{costly-package}
-\alias{costly}
 \alias{costly-package}
 \title{costly: Develop, Use and Share Unit Cost Datasets for Health Economic Analysis}
 \description{

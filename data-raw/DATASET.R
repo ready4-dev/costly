@@ -21,10 +21,10 @@ x <- ready4fun::make_pkg_desc_ls(pkg_title_1L_chr = "Develop, Use and Share Unit
                                                                        ),
                            build_ignore_ls = ready4fun::make_build_ignore_ls(file_nms_chr = c("initial_setup.R")),
                            check_type_1L_chr = "ready4",
-                           copyright_holders_chr = "Orygen",
+                           copyright_holders_chr = "Monash University",
                            custom_dmt_ls = ready4fun::make_custom_dmt_ls(),##
                            dev_pkgs_chr = c(#"cmdstanr",
-                                            "ready4",#"ready4fun",
+                                            #"ready4",#"ready4fun",
                                             "ready4use","ready4show"#,
                                             #"youthvars","scorz",
                                             #"specific"
@@ -152,11 +152,15 @@ z <- ready4::author(z)
 readLines("R/C4_CostlySource.R") %>% # Temporary fix until I work out why this stray include has been added.
   stringr::str_replace_all("#' @include ", "") %>%
   writeLines(con = "R/C4_CostlySource.R")
-ready4::write_extra_pkgs_to_actions(consent_1L_chr = "Y")
+#ready4::write_extra_pkgs_to_actions(path_to_dir_1L_chr = ".github/workflows", consent_1L_chr = "Y")
 ready4::write_to_edit_workflow("pkgdown.yaml", consent_1L_chr = "Y") # In other packages, run for "test-coverage.yaml" as well.
-readLines("_pkgdown.yml") %>%
-  stringr::str_replace_all("  - text: Model", "  - text: Framework & Model") %>%
-  writeLines(con = "_pkgdown.yml")
 usethis::use_package("ISOcodes")
 usethis::use_package("maps")
-devtools::build_vignettes()
+write_to_tidy_pkg(z$x_ready4fun_manifest, build_vignettes_1L_lgl = TRUE,
+                  clean_license_1L_lgl = TRUE, consent_1L_chr = "Y",
+                  examples_chr = character(0), suggest_chr = "pkgload")
+# readLines("_pkgdown.yml") %>%
+#   stringr::str_replace_all("  - text: Model", "  - text: Framework & Model") %>%
+#   writeLines(con = "_pkgdown.yml")
+
+# devtools::build_vignettes()

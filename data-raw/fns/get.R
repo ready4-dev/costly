@@ -128,6 +128,269 @@ get_currency_tbls <- function(type_1L_chr = c("Both","Country","Currency"),
   }
   return(currency_tbl_xx)
 }
+get_missing_medications <- function(medications_lup,
+                                    reference_var_chr = c("DPMQ", "Per Tablet")){
+  reference_var_1L_chr <- intersect(reference_var_chr, names(medications_lup))[1]
+  missing_chr <- medications_lup %>% dplyr::filter(is.na(!!rlang::sym(reference_var_1L_chr))) %>% dplyr::pull(Medication)
+  return(missing_chr)
+}
+get_patterns <- function(descriptions_chr,
+                         add_numeric_1L_lgl = TRUE,
+                         flatten_1L_lgl = FALSE,
+                         integers_1L_lgl = TRUE,
+                         plural_chr = "s",
+                         range_int = 1L:12L,
+                         reference_1L_int = integer(0),
+                         replace_blanks_1L_lgl = FALSE,
+                         spaced_1L_lgl = TRUE,
+                         strict_1L_lgl = TRUE,
+                         type_1L_chr = c("pattern", "end", "start", "match", "mismatch", "quantity"),
+                         unique_1L_lgl = TRUE,
+                         units_chr = c("minute","hour","week","month","year"),
+                         what_1L_chr = c("character", "double", "integer", "logical")){
+  type_1L_chr <- match.arg(type_1L_chr)
+  what_1L_chr <- match.arg(what_1L_chr)
+  if(!is.na(range_int[1]) && ! identical(range_int, integer(0))){
+    english_chr <- make_period_patterns(integers_1L_lgl = integers_1L_lgl, plural_chr = plural_chr, range_int = range_int, spaced_1L_lgl = spaced_1L_lgl, type_1L_chr = "english", units_chr = units_chr)
+  }else{
+    english_chr <- character(0)
+  }
+  numeric_chr <- make_period_patterns(integers_1L_lgl = ifelse(what_1L_chr == "double", FALSE, integers_1L_lgl),
+                                      plural_chr = plural_chr,
+                                      spaced_1L_lgl = spaced_1L_lgl,
+                                      type_1L_chr = "numeric",
+                                      units_chr = units_chr)
+  patterns_xx <- purrr::map(descriptions_chr,
+                            ~ {
+                              description_1L_chr <- .x
+                              purrr::map(c(english_chr,numeric_chr),
+                                         ~ {
+                                           periods_chr <- stringr::str_extract_all(description_1L_chr,.x) %>% purrr::flatten_chr()
+                                           if(identical(periods_chr, character(0))){
+                                             NA_character_
+                                           }else{periods_chr}
+                                         }
+                              ) %>% purrr::flatten_chr() %>% purrr::discard(is.na)
+                            })
+  if(unique_1L_lgl){
+    patterns_xx <- patterns_xx %>% purrr::map(~unique(.x))
+  }
+  remove_chr <- make_period_patterns(integers_1L_lgl = integers_1L_lgl, plural_chr = plural_chr, spaced_1L_lgl = spaced_1L_lgl, type_1L_chr = "blank", units_chr = units_chr)
+
+  extension_ls <- patterns_xx %>% purrr::map(~{
+    all_chr <- .x
+    extension_ls <- all_chr %>% purrr::map(~{
+      extend_1L_chr <- .x
+      extension_chr <- remove_chr %>% purrr::map_chr(~stringi::stri_replace_last_regex(extend_1L_chr,.x,""))
+      extension_chr[nchar(extension_chr)==max(nchar(extension_chr))] %>% unique()})
+    #extension_ls
+  })
+
+  if(!identical(reference_1L_int, integer(0))){ ## Still to test
+    patterns_xx <- patterns_xx %>% purrr::map2(extension_ls,
+                                               ~{
+                                                 all_chr <- .x
+                                                 if(length(all_chr)>1){
+                                                   .y %>%
+                                                     purrr::map_chr(~
+                                                                      {
+                                                                        extension_chr <- .x
+                                                                        # extension_chr <- extension_chr[nchar(extension_chr)==max(nchar(extension_chr))] %>% unique()
+                                                                        if(plural_chr[reference_1L_int] == ""){
+                                                                          extension_chr <- extension_chr[nchar(extension_chr)==min(nchar(extension_chr))] %>% unique()
+                                                                        }else{
+                                                                          if(any(endsWith(extension_chr, plural_chr[reference_1L_int]))){
+                                                                            extension_chr <- extension_chr[which(endsWith(extension_chr, plural_chr[reference_1L_int]))]
+                                                                            extension_chr <- extension_chr[nchar(extension_chr)==max(nchar(extension_chr))]
+                                                                          }
+                                                                          extension_chr <- unique(extension_chr)
+                                                                        }
+                                                                        #}
+                                                                        extension_chr
+                                                                      } )
+
+                                                 }else{
+                                                   all_chr
+                                                 }
+                                               })
+  }
+  patterns_xx <- patterns_xx %>% purrr::map2(extension_ls,~{
+    all_chr <- .x
+    if(length(all_chr)>1){
+      only_numbers_chr <- .y %>% purrr::flatten_chr() %>% purrr::map_chr(~{
+        all_1L_chr <- .x
+        candidates_chr <- remove_chr %>%
+          purrr::map_chr(~stringr::str_replace_all(all_1L_chr,.x,""))
+        candidates_chr <- suppressWarnings(candidates_chr[!is.na(as.numeric(candidates_chr))]) %>% stringr::str_squish() %>% unique()
+        if(identical(candidates_chr, character(0))){
+          candidates_chr <- NA_character_
+        }
+        candidates_chr
+      }) %>% purrr::discard(is.na)
+
+      if(identical(only_numbers_chr, character(0))){
+        all_chr
+      }else{
+        all_chr[nchar(only_numbers_chr)==max(nchar(only_numbers_chr))] %>% unique()
+      }
+    }else{
+      all_chr
+    }
+  })
+  if(type_1L_chr %in% c("start", "end", "match",
+                        "quantity")){ # , "logical"
+    replace_blanks_1L_lgl <- T
+  }
+  if(replace_blanks_1L_lgl){
+    patterns_xx <- patterns_xx %>% purrr::map(~{
+      if(identical(.x, character(0))){NA_character_}else{.x %>% purrr::map_chr(~if(identical(.x, character(0))){NA_character_}else{.x})}
+    })
+  }
+  if(type_1L_chr %in% c("start", "end", "match", "mismatch", "quantity")){ # , "logical"
+    start_ls <- descriptions_chr %>% purrr::map2(patterns_xx, ~ ifelse(is.na(.y[1]), NA_character_, suppressWarnings(sub(paste0(.y,".*"), "", .x)))) ## suppressWarnings?
+    end_ls <- descriptions_chr %>% purrr::map2(patterns_xx, ~ ifelse(is.na(.y[1]), NA_character_, suppressWarnings(sub(paste0(".*", .y), "", .x)))) ## suppressWarnings?
+    if(strict_1L_lgl){
+      match_ls <- descriptions_chr %>% purrr::map2(patterns_xx, ~ ifelse(is.na(.x) && is.na(.y[1]), NA_character_,
+                                                                         {
+                                                                           all_chr <- ifelse(stringr::str_squish(.x) == .y,.x, NA_character_) %>%
+                                                                             purrr::discard(is.na)
+                                                                           ifelse(length(all_chr)>0,.x,NA_character_)
+                                                                         }
+      ))
+      mismatch_ls <- descriptions_chr %>% purrr::map2(patterns_xx, ~ ifelse(is.na(.x) && is.na(.y[1]), NA_character_,
+                                                                            {
+                                                                              all_chr <- ifelse(stringr::str_squish(.x) == .y,.x, NA_character_) %>%
+                                                                                purrr::discard(is.na)
+                                                                              ifelse(length(all_chr)==0,.x,NA_character_)
+                                                                            }
+      ))
+    }else{
+      match_ls <- descriptions_chr %>% purrr::map2(patterns_xx, ~ ifelse(is.na(.y[1]), NA_character_, .x))
+      mismatch_ls <- descriptions_chr %>% purrr::map2(patterns_xx, ~ ifelse(!is.na(.y[1]), NA_character_, .x))
+    }
+  }
+  if(type_1L_chr == "start"){
+    patterns_xx <- start_ls
+  }
+  if(type_1L_chr == "end"){
+    patterns_xx <- end_ls
+  }
+  if(type_1L_chr %in% c("match", "mismatch", "quantity")){ #, "logical"
+    remove_chr <- make_period_patterns(integers_1L_lgl = integers_1L_lgl, plural_chr = plural_chr, spaced_1L_lgl = spaced_1L_lgl, type_1L_chr = "blank", units_chr = units_chr)
+    quantity_ls <- patterns_xx %>% purrr::map2(match_ls,~{
+      if(!identical(.x,stringr::str_squish(.y))){
+        NA_character_#.x
+      }else{
+        phrases_chr <- .x
+        phrases_chr %>% purrr::map_chr(~{
+          phrase_1L_chr <- .x
+          go_1L_lgl <- remove_chr %>% purrr::map_lgl(~stringr::str_detect(phrase_1L_chr,.x)) %>% any()
+          ifelse(go_1L_lgl,
+                 {
+                   all_chr <- remove_chr %>% purrr::map_chr(~stringr::str_remove_all(phrase_1L_chr,.x))
+                   all_chr[nchar(all_chr)==min(nchar(all_chr))]
+                 },
+                 phrase_1L_chr)
+        })
+      }
+    })
+    if(add_numeric_1L_lgl){
+      quantity_ls <- quantity_ls %>% purrr::map2(descriptions_chr, ~ifelse(is.na(.x),
+                                                                           ifelse(as.numeric(.y) %>% suppressWarnings() %>% is.na(),NA_character_,.y),
+                                                                           .x))
+      if(type_1L_chr %in% c("match", "mismatch")){
+        allowable_chr <- descriptions_chr[!(quantity_ls %>% purrr::flatten_chr() %>% is.na())] %>% unique()
+
+        #if(type_1L_chr == "match"){
+        match_ls <- descriptions_chr %>% purrr::map(~ifelse(.x %in% allowable_chr, .x, NA_character_))
+        #}
+        #if(type_1L_chr == "mismatch"){
+        mismatch_ls <- descriptions_chr %>% purrr::map(~ifelse(!.x %in% allowable_chr, .x, NA_character_))
+        #}
+      }
+    }
+    if(type_1L_chr == "match"){
+      patterns_xx <- match_ls
+    }
+    if(type_1L_chr == "mismatch"){
+      patterns_xx <- mismatch_ls
+    }
+    if(type_1L_chr == "quantity"){
+      patterns_xx <- quantity_ls
+    }
+    if(type_1L_chr %in% c("match", "quantity")){
+      if(what_1L_chr == "double"){
+        patterns_xx <- quantity_ls %>% purrr::map(~ as.double(.x))
+      }
+      if(what_1L_chr == "integer"){
+        patterns_xx <- quantity_ls %>% purrr::map(~ as.integer(.x))
+      }
+    }
+  }
+  if(what_1L_chr == "logical"){
+    patterns_xx <- patterns_xx %>% purrr::map(~ !is.na(.x[1])) ####
+  }
+  if(flatten_1L_lgl){
+    if(what_1L_chr == "character"){
+      fn <- purrr::flatten_chr
+    }
+    if(what_1L_chr == "double"){
+      fn <- purrr::flatten_dbl
+    }
+    if(what_1L_chr == "integer"){
+      fn <- purrr::flatten_int
+    }
+    if(what_1L_chr == "logical"){
+      fn <- purrr::flatten_lgl
+    }
+    patterns_xx <- patterns_xx %>% fn
+  }
+  return(patterns_xx)
+}
+get_pattern_mismatches <- function(ds_tb, # unused?
+                                   var_nms_chr,
+                                   units_chr,
+                                   add_numeric_1L_lgl = TRUE,
+                                   integers_1L_lgl = FALSE,
+                                   invert_1L_lgl = FALSE,
+                                   plural_chr = c("s", ""),
+                                   range_int = NA_integer_,
+                                   reference_1L_int = 1L,
+                                   sort_1L_lgl = FALSE,
+                                   spaced_1L_lgl = NA,
+                                   strict_1L_lgl = TRUE,
+                                   trim_1L_lgl = TRUE,
+                                   what_1L_chr = c("unique", "all", "logical")
+){
+  what_1L_chr <- match.arg(what_1L_chr)
+  mismatches_xx <- var_nms_chr %>% purrr::map(~ds_tb %>% dplyr::pull(!!rlang::sym(.x)) %>%
+                                                get_patterns(integers_1L_lgl = integers_1L_lgl,
+                                                             add_numeric_1L_lgl = add_numeric_1L_lgl,
+                                                             plural_chr = plural_chr,
+                                                             range_int = range_int,
+                                                             reference_1L_int = reference_1L_int,
+                                                             replace_blanks_1L_lgl = TRUE,
+                                                             spaced_1L_lgl = spaced_1L_lgl,
+                                                             strict_1L_lgl = strict_1L_lgl,
+                                                             unique_1L_lgl = TRUE,
+                                                             units_chr = units_chr,
+                                                             type_1L_chr = ifelse(invert_1L_lgl,"match","mismatch"),
+                                                             flatten_1L_lgl = TRUE,
+                                                             #what_1L_chr = "double"
+                                                ))
+  if(trim_1L_lgl){
+    mismatches_xx <- mismatches_xx %>% purrr::map(~ifelse(trimws(.x)=="",NA_character_,.x))
+  }
+  if(what_1L_chr == "logical"){
+    mismatches_xx <- mismatches_xx %>% purrr::map(~!is.na(.x))
+  }
+  if(what_1L_chr == "unique")
+    mismatches_xx <- mismatches_xx %>% purrr::flatten_chr() %>% unique() %>% purrr::discard(is.na)
+  if(sort_1L_lgl){
+    mismatches_xx <- mismatches_xx %>% sort()
+  }
+  return(mismatches_xx)
+}
 get_seed_cities <- function(names_1L_lgl = F,
                             indices_int = 2L,
                             default_pkg_ds_chr = c("world.cities", "maps"),
