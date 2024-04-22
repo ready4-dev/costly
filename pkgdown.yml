@@ -1,11 +1,11 @@
-pandoc: 2.19.2
-pkgdown: 2.0.7
+pandoc: 3.1.11
+pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
+  costly: costly.html
   V_01: V_01.html
   V_02: V_02.html
-  costly: costly.html
-last_built: 2023-11-04T04:45Z
+last_built: 2024-04-22T06:47Z
 urls:
   reference: https://ready4-dev.github.io/costly/reference
   article: https://ready4-dev.github.io/costly/articles
